@@ -31,8 +31,8 @@ extension Container {
 
     // MARK: - Permission Manager
 
-    var permissionManager: Factory<AccessibilityPermissionManagerProtocol> {
-        self { StubAccessibilityPermissionManager() }
+    var permissionManager: Factory<AccessibilityPermissionManager> {
+        self { AXAccessibilityPermissionManager() }
     }
 
     // MARK: - Action Coordinator
@@ -65,11 +65,6 @@ protocol WindowCyclingStrategyProtocol {
     func cycleWindows(for bundleIdentifier: String) throws
 }
 
-protocol AccessibilityPermissionManagerProtocol {
-    var hasPermission: Bool { get }
-    func requestPermission()
-    func observePermissionChanges(handler: @escaping (Bool) -> Void)
-}
 
 protocol ActionCoordinatorProtocol {
     func executeAction(for bundleIdentifier: String)
@@ -118,21 +113,6 @@ class StubHotkeyManager: HotkeyManagerProtocol {
 class StubWindowCyclingStrategy: WindowCyclingStrategyProtocol {
     func cycleWindows(for bundleIdentifier: String) throws {
         print("Stub: Cycle windows for \(bundleIdentifier)")
-    }
-}
-
-class StubAccessibilityPermissionManager: AccessibilityPermissionManagerProtocol {
-    var hasPermission: Bool {
-        print("Stub: Check accessibility permission")
-        return false
-    }
-
-    func requestPermission() {
-        print("Stub: Request accessibility permission")
-    }
-
-    func observePermissionChanges(handler: @escaping (Bool) -> Void) {
-        print("Stub: Observe permission changes")
     }
 }
 

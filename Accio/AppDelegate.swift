@@ -7,6 +7,7 @@
 
 import AppKit
 import SwiftUI
+import ApplicationServices
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
@@ -17,6 +18,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Create menu bar item
         setupMenuBar()
+
+        // Check accessibility permission and open settings if not granted
+        if !AXIsProcessTrusted() {
+            WindowManager.shared.showSettings()
+        }
     }
 
     private func setupMenuBar() {
