@@ -29,10 +29,18 @@ extension Container {
         self { StubWindowCyclingStrategy() }
     }
 
+    // MARK: - Window Manager
+
+    var windowManager: Factory<WindowManager> {
+        self { DefaultWindowManager() }
+            .singleton
+    }
+
     // MARK: - Permission Manager
 
     var permissionManager: Factory<AccessibilityPermissionManager> {
-        self { AXAccessibilityPermissionManager() }
+        self { ObservableAccessibilityPermissionManager() }
+            .singleton
     }
 
     // MARK: - Action Coordinator

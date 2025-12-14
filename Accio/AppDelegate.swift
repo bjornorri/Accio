@@ -7,10 +7,14 @@
 
 import AppKit
 import SwiftUI
-import ApplicationServices
+import FactoryKit
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
+
+    // Inject dependencies via Factory
+    @Injected(\.windowManager) private var windowManager: WindowManager
+    @Injected(\.permissionManager) private var permissionManager: AccessibilityPermissionManager
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set initial activation policy to accessory (hidden from dock/switcher)
@@ -20,8 +24,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupMenuBar()
 
         // Check accessibility permission and open settings if not granted
-        if !AXIsProcessTrusted() {
-            WindowManager.shared.showSettings()
+        if !permissionManager.hasPermission {
+            openSettings()
         }
     }
 
@@ -44,7 +48,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
-        WindowManager.shared.showSettings()
+        windowManager.showSettings()
     }
 
     @objc private func quit() {

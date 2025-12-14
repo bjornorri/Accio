@@ -1,5 +1,5 @@
 //
-//  WindowManager.swift
+//  DefaultWindowManager.swift
 //  Accio
 //
 //  Created by Bjorn Orri Saemundsson on 14.12.2025.
@@ -9,12 +9,10 @@ import AppKit
 import SwiftUI
 
 /// Manages the settings window lifecycle with dynamic dock/app switcher behavior
-class WindowManager {
-    static let shared = WindowManager()
-
+class DefaultWindowManager: WindowManager {
     private var settingsWindow: SettingsWindow?
 
-    private init() {
+    init() {
         // Set up notification observer for window close
         NotificationCenter.default.addObserver(
             self,

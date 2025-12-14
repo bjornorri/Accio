@@ -6,15 +6,12 @@
 //
 
 import SwiftUI
-import Combine
 import FactoryKit
 
 /// Settings view with accessibility permissions and app preferences
 struct SettingsView: View {
     @Injected(\.permissionManager) private var permissionManager
-
-    @State private var accessibilityPermissionGranted = false
-    @State private var timerCancellable: AnyCancellable?
+    @StateObject private var observablePermissionManager = Container.shared.permissionManager() as! ObservableAccessibilityPermissionManager
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -23,8 +20,8 @@ struct SettingsView: View {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 6) {
-                            Image(systemName: accessibilityPermissionGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(accessibilityPermissionGranted ? .green : .red)
+                            Image(systemName: observablePermissionManager.hasPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundColor(observablePermissionManager.hasPermission ? .green : .red)
 
                             Text("Accessibility Access")
                         }
@@ -39,10 +36,10 @@ struct SettingsView: View {
                     Spacer()
 
                     Button("Grant Permission") {
-                        permissionManager.requestPermission()
+                        observablePermissionManager.requestPermission()
                     }
-                    .opacity(accessibilityPermissionGranted ? 0 : 1)
-                    .disabled(accessibilityPermissionGranted)
+                    .opacity(observablePermissionManager.hasPermission ? 0 : 1)
+                    .disabled(observablePermissionManager.hasPermission)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 12)
@@ -55,36 +52,22 @@ struct SettingsView: View {
         .padding(.bottom, 32)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear {
-            accessibilityPermissionGranted = permissionManager.hasPermission
+            // Check permission when view appears
+            observablePermissionManager.checkPermission()
         }
         .onDisappear {
-            stopTimer()
+            // Stop monitoring when view disappears (window closed)
+            observablePermissionManager.stopMonitoring()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
-            stopTimer()
-            accessibilityPermissionGranted = permissionManager.hasPermission
+            // Stop monitoring and check permission when window gains focus
+            observablePermissionManager.stopMonitoring()
+            observablePermissionManager.checkPermission()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
-            startTimer()
+            // Start monitoring when window loses focus (user might be in System Settings)
+            observablePermissionManager.startMonitoring()
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            accessibilityPermissionGranted = permissionManager.hasPermission
-        }
-    }
-
-    private func startTimer() {
-        guard timerCancellable == nil else { return }
-
-        timerCancellable = Timer.publish(every: 0.5, on: .main, in: .common)
-            .autoconnect()
-            .sink { _ in
-                accessibilityPermissionGranted = permissionManager.hasPermission
-            }
-    }
-
-    private func stopTimer() {
-        timerCancellable?.cancel()
-        timerCancellable = nil
     }
 }
 
