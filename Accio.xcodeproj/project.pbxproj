@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		98F939032EEF0B4600D0B4D6 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 98F939022EEF0B4600D0B4D6 /* KeyboardShortcuts */; };
+		98F939062EEF0B7D00D0B4D6 /* FactoryKit in Frameworks */ = {isa = PBXBuildFile; productRef = 98F939052EEF0B7D00D0B4D6 /* FactoryKit */; };
+		98F939082EEF0B7D00D0B4D6 /* FactoryTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 98F939072EEF0B7D00D0B4D6 /* FactoryTesting */; };
+		98F9390B2EEF0BEC00D0B4D6 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 98F9390A2EEF0BEC00D0B4D6 /* Defaults */; };
+		98F9390D2EEF0BEC00D0B4D6 /* DefaultsMacros in Frameworks */ = {isa = PBXBuildFile; productRef = 98F9390C2EEF0BEC00D0B4D6 /* DefaultsMacros */; };
+		98F939102EEF0C0200D0B4D6 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 98F9390F2EEF0C0200D0B4D6 /* LaunchAtLogin */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		98F938E22EEEE9AB00D0B4D6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +61,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				98F9390B2EEF0BEC00D0B4D6 /* Defaults in Frameworks */,
+				98F939062EEF0B7D00D0B4D6 /* FactoryKit in Frameworks */,
+				98F939032EEF0B4600D0B4D6 /* KeyboardShortcuts in Frameworks */,
+				98F939102EEF0C0200D0B4D6 /* LaunchAtLogin in Frameworks */,
+				98F9390D2EEF0BEC00D0B4D6 /* DefaultsMacros in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +73,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				98F939082EEF0B7D00D0B4D6 /* FactoryTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +127,11 @@
 			);
 			name = Accio;
 			packageProductDependencies = (
+				98F939022EEF0B4600D0B4D6 /* KeyboardShortcuts */,
+				98F939052EEF0B7D00D0B4D6 /* FactoryKit */,
+				98F9390A2EEF0BEC00D0B4D6 /* Defaults */,
+				98F9390C2EEF0BEC00D0B4D6 /* DefaultsMacros */,
+				98F9390F2EEF0C0200D0B4D6 /* LaunchAtLogin */,
 			);
 			productName = Accio;
 			productReference = 98F938D22EEEE9AA00D0B4D6 /* Accio.app */;
@@ -135,6 +155,7 @@
 			);
 			name = AccioTests;
 			packageProductDependencies = (
+				98F939072EEF0B7D00D0B4D6 /* FactoryTesting */,
 			);
 			productName = AccioTests;
 			productReference = 98F938E12EEEE9AB00D0B4D6 /* AccioTests.xctest */;
@@ -195,6 +216,12 @@
 			);
 			mainGroup = 98F938C92EEEE9AA00D0B4D6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				98F939012EEF0B4600D0B4D6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				98F939042EEF0B7D00D0B4D6 /* XCRemoteSwiftPackageReference "Factory" */,
+				98F939092EEF0BEC00D0B4D6 /* XCRemoteSwiftPackageReference "Defaults" */,
+				98F9390E2EEF0C0200D0B4D6 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 98F938D32EEEE9AA00D0B4D6 /* Products */;
 			projectDirPath = "";
@@ -573,6 +600,74 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		98F939012EEF0B4600D0B4D6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
+		98F939042EEF0B7D00D0B4D6 /* XCRemoteSwiftPackageReference "Factory" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/hmlongco/Factory.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.3;
+			};
+		};
+		98F939092EEF0BEC00D0B4D6 /* XCRemoteSwiftPackageReference "Defaults" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/Defaults.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.6;
+			};
+		};
+		98F9390E2EEF0C0200D0B4D6 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin-Modern.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		98F939022EEF0B4600D0B4D6 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 98F939012EEF0B4600D0B4D6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+		98F939052EEF0B7D00D0B4D6 /* FactoryKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 98F939042EEF0B7D00D0B4D6 /* XCRemoteSwiftPackageReference "Factory" */;
+			productName = FactoryKit;
+		};
+		98F939072EEF0B7D00D0B4D6 /* FactoryTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 98F939042EEF0B7D00D0B4D6 /* XCRemoteSwiftPackageReference "Factory" */;
+			productName = FactoryTesting;
+		};
+		98F9390A2EEF0BEC00D0B4D6 /* Defaults */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 98F939092EEF0BEC00D0B4D6 /* XCRemoteSwiftPackageReference "Defaults" */;
+			productName = Defaults;
+		};
+		98F9390C2EEF0BEC00D0B4D6 /* DefaultsMacros */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 98F939092EEF0BEC00D0B4D6 /* XCRemoteSwiftPackageReference "Defaults" */;
+			productName = DefaultsMacros;
+		};
+		98F9390F2EEF0C0200D0B4D6 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 98F9390E2EEF0C0200D0B4D6 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */;
+			productName = LaunchAtLogin;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 98F938CA2EEEE9AA00D0B4D6 /* Project object */;
 }
