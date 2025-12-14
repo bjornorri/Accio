@@ -9,9 +9,17 @@ import SwiftUI
 
 @main
 struct AccioApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        // Menu bar app - no window scenes
+        // Settings window is managed by WindowManager
+        Settings {
+            EmptyView()
+        }
+        .commands {
+            // Remove the native Settings menu item
+            CommandGroup(replacing: .appSettings) { }
         }
     }
 }
