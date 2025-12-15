@@ -14,32 +14,24 @@ import FactoryTesting
 @Suite(.container)
 struct DefaultAccessibilityPermissionMonitorTests {
 
-    @Test func monitorStartsInactive() async {
+    @Test func monitorReflectsInitialPermissionState_whenFalse() async {
         let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
         Container.shared.permissionProvider.register { mockProvider }
         Container.shared.clock.register { TestClock() }
 
         let monitor = Container.shared.permissionMonitor()
 
-        // Monitor should start with the provider's initial value
         #expect(monitor.hasPermission == false)
     }
 
-    @Test func monitorCanBeStartedAndStopped() async {
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
+    @Test func monitorReflectsInitialPermissionState_whenTrue() async {
+        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: true)
         Container.shared.permissionProvider.register { mockProvider }
         Container.shared.clock.register { TestClock() }
 
         let monitor = Container.shared.permissionMonitor()
 
-        // Start monitoring
-        monitor.startMonitoring()
-
-        // Stop monitoring
-        monitor.stopMonitoring()
-
-        // Verify no crashes or issues
-        #expect(true)
+        #expect(monitor.hasPermission == true)
     }
 
     @Test func monitorPollsAtOneSecondIntervals() async {
@@ -207,24 +199,77 @@ struct DefaultAccessibilityPermissionMonitorTests {
         #expect(lastValue == true)
     }
 
-    @Test func multipleStartMonitoringCallsAreSafe() async {
+    @Test func stopMonitoringPreventsPolling() async {
+        let clock = TestClock()
         let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
+
+        Container.shared.clock.register { clock }
         Container.shared.permissionProvider.register { mockProvider }
-        Container.shared.clock.register { TestClock() }
 
         let monitor = Container.shared.permissionMonitor()
+
+        var changeCallCount = 0
+        monitor.onPermissionChange { _ in
+            changeCallCount += 1
+        }
+
+        // Initial callback
+        #expect(changeCallCount == 1)
+
+        monitor.startMonitoring()
+        await Task.yield()
+
+        // Stop monitoring
+        monitor.stopMonitoring()
+
+        // Change permission after stopping
+        mockProvider.hasPermission = true
+
+        // Advance time - should NOT trigger callback since monitoring stopped
+        await clock.advance(by: .seconds(1))
+        await Task.yield()
+
+        await clock.advance(by: .seconds(1))
+        await Task.yield()
+
+        // Should still only have the initial call
+        #expect(changeCallCount == 1)
+    }
+
+    @Test func multipleStartMonitoringCallsCreateOnlyOneTask() async {
+        let clock = TestClock()
+        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
+
+        Container.shared.clock.register { clock }
+        Container.shared.permissionProvider.register { mockProvider }
+
+        let monitor = Container.shared.permissionMonitor()
+
+        var changeCallCount = 0
+        monitor.onPermissionChange { _ in
+            changeCallCount += 1
+        }
+
+        // Initial callback
+        #expect(changeCallCount == 1)
 
         // Start monitoring multiple times
         monitor.startMonitoring()
         monitor.startMonitoring()
         monitor.startMonitoring()
-
-        // Should not create multiple tasks or cause issues
         await Task.yield()
 
-        monitor.stopMonitoring()
+        // Change permission
+        mockProvider.hasPermission = true
 
-        #expect(true)
+        // Advance time once
+        await clock.advance(by: .seconds(1))
+        await Task.yield()
+
+        // Should only get ONE additional callback (not 3) proving only one task is running
+        #expect(changeCallCount == 2)
+
+        monitor.stopMonitoring()
     }
 }
 
