@@ -14,7 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Inject dependencies via Factory
     @Injected(\.windowManager) private var windowManager: WindowManager
-    @Injected(\.permissionManager) private var permissionManager: AccessibilityPermissionManager
+    @Injected(\.permissionProvider) private var permissionProvider: AccessibilityPermissionProvider
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set initial activation policy to accessory (hidden from dock/switcher)
@@ -24,7 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupMenuBar()
 
         // Check accessibility permission and open settings if not granted
-        if !permissionManager.hasPermission {
+        if !permissionProvider.hasPermission {
             openSettings()
         }
     }

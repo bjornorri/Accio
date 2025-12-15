@@ -38,8 +38,13 @@ extension Container {
 
     // MARK: - Permission Manager
 
-    var permissionManager: Factory<AccessibilityPermissionManager> {
-        self { ObservableAccessibilityPermissionManager() }
+    var permissionProvider: Factory<AccessibilityPermissionProvider> {
+        self { DefaultAccessibilityPermissionProvider() }
+            .singleton
+    }
+
+    var permissionMonitor: Factory<AccessibilityPermissionMonitor> {
+        self { DefaultAccessibilityPermissionMonitor() }
             .singleton
     }
 

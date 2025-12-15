@@ -5,17 +5,36 @@
 //  Created by Bjorn Orri Saemundsson on 14.12.2025.
 //
 
-import ApplicationServices
+import FactoryKit
 import Foundation
-import Combine
 
 /// Observable accessibility permission manager with on-demand monitoring
-class ObservableAccessibilityPermissionManager: AccessibilityPermissionManager, ObservableObject {
-    @Published private(set) var hasPermission: Bool = false
+class DefaultAccessibilityPermissionMonitor: AccessibilityPermissionMonitor {
+
+    @Injected(\.permissionProvider) private var permissionProvider
+    private var _hasPermission: Bool = false
+    private var onChange: ((Bool) -> Void)?
     private var monitoringTask: Task<Void, Never>?
 
+    var hasPermission: Bool {
+        _hasPermission
+    }
+
     init() {
-        hasPermission = AXIsProcessTrusted()
+        _hasPermission = permissionProvider.hasPermission
+    }
+
+    /// Register callback to be notified of permission changes
+    func onPermissionChange(_ onChange: @escaping (Bool) -> Void) {
+        self.onChange = onChange
+        // Immediately call with current value
+        onChange(_hasPermission)
+    }
+
+    private func updatePermission(_ newValue: Bool) {
+        guard _hasPermission != newValue else { return }
+        _hasPermission = newValue
+        onChange?(newValue)
     }
 
     /// Start monitoring permission status (call when settings window loses focus)
@@ -27,10 +46,8 @@ class ObservableAccessibilityPermissionManager: AccessibilityPermissionManager, 
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
                 print("Checking permission!")
-                let currentStatus = AXIsProcessTrusted()
-                if currentStatus != hasPermission {
-                    hasPermission = currentStatus
-                }
+                let currentStatus = permissionProvider.hasPermission
+                updatePermission(currentStatus)
             }
         }
     }
@@ -43,16 +60,14 @@ class ObservableAccessibilityPermissionManager: AccessibilityPermissionManager, 
 
     /// Check permission status immediately (call when window gains focus)
     func checkPermission() {
-        hasPermission = AXIsProcessTrusted()
+        updatePermission(permissionProvider.hasPermission)
     }
 
     func requestPermission() {
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        _ = AXIsProcessTrustedWithOptions(options)
+        permissionProvider.requestPermission()
         // Check immediately after request
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(100))
-            hasPermission = AXIsProcessTrusted()
+            updatePermission(permissionProvider.hasPermission)
         }
     }
 

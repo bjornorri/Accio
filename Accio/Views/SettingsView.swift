@@ -10,8 +10,8 @@ import FactoryKit
 
 /// Settings view with accessibility permissions and app preferences
 struct SettingsView: View {
-    @Injected(\.permissionManager) private var permissionManager
-    @StateObject private var observablePermissionManager = Container.shared.permissionManager() as! ObservableAccessibilityPermissionManager
+    @Injected(\.permissionMonitor) private var permissionMonitor: AccessibilityPermissionMonitor
+    @State private var hasPermission: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -20,8 +20,8 @@ struct SettingsView: View {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 6) {
-                            Image(systemName: observablePermissionManager.hasPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(observablePermissionManager.hasPermission ? .green : .red)
+                            Image(systemName: hasPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundColor(hasPermission ? .green : .red)
 
                             Text("Accessibility Access")
                         }
@@ -36,10 +36,10 @@ struct SettingsView: View {
                     Spacer()
 
                     Button("Grant Permission") {
-                        observablePermissionManager.requestPermission()
+                        permissionMonitor.requestPermission()
                     }
-                    .opacity(observablePermissionManager.hasPermission ? 0 : 1)
-                    .disabled(observablePermissionManager.hasPermission)
+                    .opacity(hasPermission ? 0 : 1)
+                    .disabled(hasPermission)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 12)
@@ -52,21 +52,24 @@ struct SettingsView: View {
         .padding(.bottom, 32)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear {
-            // Check permission when view appears
-            observablePermissionManager.checkPermission()
+            // Register callback and check permission
+            permissionMonitor.onPermissionChange { newValue in
+                hasPermission = newValue
+            }
+            permissionMonitor.checkPermission()
         }
         .onDisappear {
             // Stop monitoring when view disappears (window closed)
-            observablePermissionManager.stopMonitoring()
+            permissionMonitor.stopMonitoring()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
             // Stop monitoring and check permission when window gains focus
-            observablePermissionManager.stopMonitoring()
-            observablePermissionManager.checkPermission()
+            permissionMonitor.stopMonitoring()
+            permissionMonitor.checkPermission()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
             // Start monitoring when window loses focus (user might be in System Settings)
-            observablePermissionManager.startMonitoring()
+            permissionMonitor.startMonitoring()
         }
     }
 }

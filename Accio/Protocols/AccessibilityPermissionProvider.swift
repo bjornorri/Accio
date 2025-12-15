@@ -8,7 +8,7 @@
 import Foundation
 
 /// Protocol for managing accessibility permissions
-protocol AccessibilityPermissionManager {
+protocol AccessibilityPermissionProvider {
     /// Check if the app has accessibility permission
     var hasPermission: Bool { get }
 
