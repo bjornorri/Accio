@@ -7,12 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		98F501F12EF08834000582BD /* Clocks in Frameworks */ = {isa = PBXBuildFile; productRef = 98F501F02EF08834000582BD /* Clocks */; };
 		98F939032EEF0B4600D0B4D6 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 98F939022EEF0B4600D0B4D6 /* KeyboardShortcuts */; };
 		98F939062EEF0B7D00D0B4D6 /* FactoryKit in Frameworks */ = {isa = PBXBuildFile; productRef = 98F939052EEF0B7D00D0B4D6 /* FactoryKit */; };
 		98F939082EEF0B7D00D0B4D6 /* FactoryTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 98F939072EEF0B7D00D0B4D6 /* FactoryTesting */; };
 		98F9390B2EEF0BEC00D0B4D6 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 98F9390A2EEF0BEC00D0B4D6 /* Defaults */; };
 		98F9390D2EEF0BEC00D0B4D6 /* DefaultsMacros in Frameworks */ = {isa = PBXBuildFile; productRef = 98F9390C2EEF0BEC00D0B4D6 /* DefaultsMacros */; };
 		98F939102EEF0C0200D0B4D6 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 98F9390F2EEF0C0200D0B4D6 /* LaunchAtLogin */; };
+		98F939122EEF0D0000D0B4D6 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +55,7 @@
 				98F939032EEF0B4600D0B4D6 /* KeyboardShortcuts in Frameworks */,
 				98F939102EEF0C0200D0B4D6 /* LaunchAtLogin in Frameworks */,
 				98F9390D2EEF0BEC00D0B4D6 /* DefaultsMacros in Frameworks */,
+				98F501F12EF08834000582BD /* Clocks in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,6 +64,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				98F939082EEF0B7D00D0B4D6 /* FactoryTesting in Frameworks */,
+				98F939122EEF0D0000D0B4D6 /* (null) in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -110,6 +114,7 @@
 				98F9390A2EEF0BEC00D0B4D6 /* Defaults */,
 				98F9390C2EEF0BEC00D0B4D6 /* DefaultsMacros */,
 				98F9390F2EEF0C0200D0B4D6 /* LaunchAtLogin */,
+				98F501F02EF08834000582BD /* Clocks */,
 			);
 			productName = Accio;
 			productReference = 98F938D22EEEE9AA00D0B4D6 /* Accio.app */;
@@ -172,6 +177,7 @@
 				98F939042EEF0B7D00D0B4D6 /* XCRemoteSwiftPackageReference "Factory" */,
 				98F939092EEF0BEC00D0B4D6 /* XCRemoteSwiftPackageReference "Defaults" */,
 				98F9390E2EEF0C0200D0B4D6 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
+				98F501EF2EF08834000582BD /* XCRemoteSwiftPackageReference "swift-clocks" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 98F938D32EEEE9AA00D0B4D6 /* Products */;
@@ -486,6 +492,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		98F501EF2EF08834000582BD /* XCRemoteSwiftPackageReference "swift-clocks" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-clocks";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.6;
+			};
+		};
 		98F939012EEF0B4600D0B4D6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts.git";
@@ -521,6 +535,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		98F501F02EF08834000582BD /* Clocks */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 98F501EF2EF08834000582BD /* XCRemoteSwiftPackageReference "swift-clocks" */;
+			productName = Clocks;
+		};
 		98F939022EEF0B4600D0B4D6 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 98F939012EEF0B4600D0B4D6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;

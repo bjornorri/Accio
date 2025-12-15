@@ -12,6 +12,7 @@ import Foundation
 class DefaultAccessibilityPermissionMonitor: AccessibilityPermissionMonitor {
 
     @Injected(\.permissionProvider) private var permissionProvider
+    @Injected(\.clock) private var clock: any Clock<Duration>
     private var _hasPermission: Bool = false
     private var onChange: ((Bool) -> Void)?
     private var monitoringTask: Task<Void, Never>?
@@ -44,8 +45,12 @@ class DefaultAccessibilityPermissionMonitor: AccessibilityPermissionMonitor {
 
         monitoringTask = Task { @MainActor in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                print("Checking permission!")
+                do {
+                    try await clock.sleep(for: .seconds(1))
+                } catch {
+                    // Clock threw (likely cancellation), break the loop
+                    break
+                }
                 let currentStatus = permissionProvider.hasPermission
                 updatePermission(currentStatus)
             }

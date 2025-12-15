@@ -48,6 +48,13 @@ extension Container {
             .singleton
     }
 
+    // MARK: - Clock
+
+    var clock: Factory<any Clock<Duration>> {
+        self { ContinuousClock() }
+            .singleton
+    }
+
     // MARK: - Action Coordinator
 
     var actionCoordinator: Factory<ActionCoordinatorProtocol> {
