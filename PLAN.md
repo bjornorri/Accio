@@ -31,6 +31,14 @@ Accio is a macOS menu bar app that lets users bind global hotkeys to application
    - **Features**: Modern SMAppService API wrapper, SwiftUI toggle component
    - **URL**: `https://github.com/sindresorhus/LaunchAtLogin-Modern.git`
 
+### Testing Dependencies
+
+5. **[swift-clocks](https://github.com/pointfreeco/swift-clocks)** (v1.0+)
+   - **Function**: Testable time abstraction using Swift's `Clock` protocol
+   - **Features**: `TestClock` for deterministic time control in tests, `ImmediateClock` for instant execution
+   - **URL**: `https://github.com/pointfreeco/swift-clocks.git`
+   - **Usage**: Production code uses `ContinuousClock`, tests use `TestClock` to advance time without waiting
+
 ### Window Management Strategy
 
 **System Cmd+` for window cycling** (initial implementation)
@@ -687,6 +695,59 @@ Accio/
 7. **Window Cycling Edge Cases**: Single window, no windows, app has multiple spaces
 
 ## Testing Strategy
+
+### Factory Testing Setup
+
+Tests use Factory's recommended pattern with `FactoryTesting`:
+
+```swift
+import Testing
+import Clocks
+import FactoryKit
+import FactoryTesting
+@testable import Accio
+
+@Suite(.container)  // Isolates each test with fresh container
+struct MyTests {
+    @Test func example() async {
+        // Register mocks
+        Container.shared.someService.register { MockService() }
+
+        // Get instance via container
+        let sut = Container.shared.myComponent()
+
+        // Test...
+    }
+}
+```
+
+**Key imports:**
+- `FactoryKit` - provides `Container` type
+- `FactoryTesting` - provides `.container` trait for test isolation
+- `Clocks` - provides `TestClock` for time-based testing
+
+**Test isolation:** The `@Suite(.container)` trait automatically resets the container for each test, enabling parallel test execution.
+
+### Time-Based Testing
+
+For components using `Task.sleep` or timers, inject `Clock` via Factory:
+
+```swift
+// DependencyContainer.swift
+var clock: Factory<any Clock<Duration>> {
+    self { ContinuousClock() }
+        .singleton
+}
+
+// In tests
+let clock = TestClock()
+Container.shared.clock.register { clock }
+
+// Advance time without waiting
+await clock.advance(by: .seconds(1))
+```
+
+### Test Types
 
 - **Unit Tests**: Factory DI supports test registrations; mock all protocols
 - **Integration Tests**: End-to-end flows with behavior settings
