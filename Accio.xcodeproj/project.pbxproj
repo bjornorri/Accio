@@ -23,19 +23,11 @@
 			remoteGlobalIDString = 98F938D12EEEE9AA00D0B4D6;
 			remoteInfo = Accio;
 		};
-		98F938EC2EEEE9AB00D0B4D6 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 98F938CA2EEEE9AA00D0B4D6 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 98F938D12EEEE9AA00D0B4D6;
-			remoteInfo = Accio;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		98F938D22EEEE9AA00D0B4D6 /* Accio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Accio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		98F938E12EEEE9AB00D0B4D6 /* AccioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AccioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		98F938EB2EEEE9AB00D0B4D6 /* AccioUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AccioUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,11 +39,6 @@
 		98F938E42EEEE9AB00D0B4D6 /* AccioTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = AccioTests;
-			sourceTree = "<group>";
-		};
-		98F938EE2EEEE9AB00D0B4D6 /* AccioUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AccioUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -77,13 +64,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		98F938E82EEEE9AB00D0B4D6 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -92,7 +72,6 @@
 			children = (
 				98F938D42EEEE9AA00D0B4D6 /* Accio */,
 				98F938E42EEEE9AB00D0B4D6 /* AccioTests */,
-				98F938EE2EEEE9AB00D0B4D6 /* AccioUITests */,
 				98F938D32EEEE9AA00D0B4D6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -102,7 +81,6 @@
 			children = (
 				98F938D22EEEE9AA00D0B4D6 /* Accio.app */,
 				98F938E12EEEE9AB00D0B4D6 /* AccioTests.xctest */,
-				98F938EB2EEEE9AB00D0B4D6 /* AccioUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -161,29 +139,6 @@
 			productReference = 98F938E12EEEE9AB00D0B4D6 /* AccioTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		98F938EA2EEEE9AB00D0B4D6 /* AccioUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 98F938FB2EEEE9AB00D0B4D6 /* Build configuration list for PBXNativeTarget "AccioUITests" */;
-			buildPhases = (
-				98F938E72EEEE9AB00D0B4D6 /* Sources */,
-				98F938E82EEEE9AB00D0B4D6 /* Frameworks */,
-				98F938E92EEEE9AB00D0B4D6 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				98F938ED2EEEE9AB00D0B4D6 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				98F938EE2EEEE9AB00D0B4D6 /* AccioUITests */,
-			);
-			name = AccioUITests;
-			packageProductDependencies = (
-			);
-			productName = AccioUITests;
-			productReference = 98F938EB2EEEE9AB00D0B4D6 /* AccioUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -198,10 +153,6 @@
 						CreatedOnToolsVersion = 26.1.1;
 					};
 					98F938E02EEEE9AB00D0B4D6 = {
-						CreatedOnToolsVersion = 26.1.1;
-						TestTargetID = 98F938D12EEEE9AA00D0B4D6;
-					};
-					98F938EA2EEEE9AB00D0B4D6 = {
 						CreatedOnToolsVersion = 26.1.1;
 						TestTargetID = 98F938D12EEEE9AA00D0B4D6;
 					};
@@ -229,7 +180,6 @@
 			targets = (
 				98F938D12EEEE9AA00D0B4D6 /* Accio */,
 				98F938E02EEEE9AB00D0B4D6 /* AccioTests */,
-				98F938EA2EEEE9AB00D0B4D6 /* AccioUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -243,13 +193,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		98F938DF2EEEE9AB00D0B4D6 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		98F938E92EEEE9AB00D0B4D6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -273,13 +216,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		98F938E72EEEE9AB00D0B4D6 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -287,11 +223,6 @@
 			isa = PBXTargetDependency;
 			target = 98F938D12EEEE9AA00D0B4D6 /* Accio */;
 			targetProxy = 98F938E22EEEE9AB00D0B4D6 /* PBXContainerItemProxy */;
-		};
-		98F938ED2EEEE9AB00D0B4D6 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 98F938D12EEEE9AA00D0B4D6 /* Accio */;
-			targetProxy = 98F938EC2EEEE9AB00D0B4D6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -522,44 +453,6 @@
 			};
 			name = Release;
 		};
-		98F938FC2EEEE9AB00D0B4D6 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5762VEA4LK;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bjornorri.AccioUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = Accio;
-			};
-			name = Debug;
-		};
-		98F938FD2EEEE9AB00D0B4D6 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5762VEA4LK;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bjornorri.AccioUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = Accio;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -586,15 +479,6 @@
 			buildConfigurations = (
 				98F938F92EEEE9AB00D0B4D6 /* Debug */,
 				98F938FA2EEEE9AB00D0B4D6 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		98F938FB2EEEE9AB00D0B4D6 /* Build configuration list for PBXNativeTarget "AccioUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				98F938FC2EEEE9AB00D0B4D6 /* Debug */,
-				98F938FD2EEEE9AB00D0B4D6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
