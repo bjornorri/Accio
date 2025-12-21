@@ -33,6 +33,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !permissionProvider.hasPermission {
             openSettings()
         }
+
+        #if DEBUG
+        // Always open settings window on launch in debug builds
+        openSettings()
+        #endif
     }
 
     private func setupMenuBar() {
