@@ -29,6 +29,12 @@ extension Container {
         self { DefaultSystemShortcutReader() }
     }
 
+    // MARK: - Keyboard Event Poster
+
+    var keyboardEventPoster: Factory<KeyboardEventPoster> {
+        self { CGEventKeyboardEventPoster() }
+    }
+
     // MARK: - Window Cycler
 
     var windowCycler: Factory<WindowCycler> {
