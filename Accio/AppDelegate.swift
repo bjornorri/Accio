@@ -8,6 +8,7 @@
 import AppKit
 import SwiftUI
 import FactoryKit
+import KeyboardShortcuts
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
@@ -15,6 +16,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Inject dependencies via Factory
     @Injected(\.windowManager) private var windowManager: WindowManager
     @Injected(\.permissionProvider) private var permissionProvider: AccessibilityPermissionProvider
+    @Injected(\.hotkeyManager) private var hotkeyManager: HotkeyManager
+    @Injected(\.applicationManager) private var applicationManager: ApplicationManager
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set initial activation policy to accessory (hidden from dock/switcher)
@@ -22,6 +25,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Create menu bar item
         setupMenuBar()
+
+        // Register hardcoded Safari hotkey (Cmd+Shift+S)
+        registerSafariHotkey()
 
         // Check accessibility permission and open settings if not granted
         if !permissionProvider.hasPermission {
@@ -47,6 +53,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem?.menu = menu
     }
 
+    private func registerSafariHotkey() {
+        hotkeyManager.register(name: KeyboardShortcuts.Name.safari.rawValue) { [weak self] in
+            guard let self = self else { return }
+            await self.handleSafariHotkey()
+        }
+    }
+
+    private func handleSafariHotkey() async {
+        let safariBundle = "com.apple.Safari"
+
+        do {
+            if !applicationManager.isRunning(bundleIdentifier: safariBundle) {
+                // Safari is not running, launch it
+                try await applicationManager.launch(bundleIdentifier: safariBundle)
+            }
+
+            if !applicationManager.isFocused(bundleIdentifier: safariBundle) {
+                // Safari is running but not focused, activate it
+                try applicationManager.activate(bundleIdentifier: safariBundle)
+            }
+        } catch {
+            print("Error handling Safari hotkey: \(error)")
+        }
+    }
+
     @objc private func openSettings() {
         windowManager.showSettings()
     }
@@ -55,3 +86,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.terminate(nil)
     }
 }
+
