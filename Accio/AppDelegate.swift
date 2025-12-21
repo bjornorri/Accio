@@ -6,9 +6,10 @@
 //
 
 import AppKit
-import SwiftUI
+import Defaults
 import FactoryKit
 import KeyboardShortcuts
+import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
@@ -17,7 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @Injected(\.windowManager) private var windowManager: WindowManager
     @Injected(\.permissionProvider) private var permissionProvider: AccessibilityPermissionProvider
     @Injected(\.hotkeyManager) private var hotkeyManager: HotkeyManager
-    @Injected(\.applicationManager) private var applicationManager: ApplicationManager
+    @Injected(\.actionCoordinator) private var actionCoordinator: ActionCoordinator
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set initial activation policy to accessory (hidden from dock/switcher)
@@ -66,21 +67,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func handleSafariHotkey() async {
-        let safariBundle = "com.apple.Safari"
-
-        do {
-            if !applicationManager.isRunning(bundleIdentifier: safariBundle) {
-                // Safari is not running, launch it
-                try await applicationManager.launch(bundleIdentifier: safariBundle)
-            }
-
-            if !applicationManager.isFocused(bundleIdentifier: safariBundle) {
-                // Safari is running but not focused, activate it
-                try applicationManager.activate(bundleIdentifier: safariBundle)
-            }
-        } catch {
-            print("Error handling Safari hotkey: \(error)")
-        }
+        let settings = Defaults[.appBehaviorSettings]
+        await actionCoordinator.executeAction(for: "com.apple.Safari", settings: settings)
     }
 
     @objc private func openSettings() {

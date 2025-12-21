@@ -23,10 +23,22 @@ extension Container {
         self { KeyboardShortcutsHotkeyManager() }
     }
 
-    // MARK: - Window Cycling Strategy
+    // MARK: - System Shortcut Reader
 
-    var windowCyclingStrategy: Factory<WindowCyclingStrategyProtocol> {
-        self { StubWindowCyclingStrategy() }
+    var systemShortcutReader: Factory<SystemShortcutReader> {
+        self { DefaultSystemShortcutReader() }
+    }
+
+    // MARK: - Window Cycler
+
+    var windowCycler: Factory<WindowCycler> {
+        self { SystemWindowCycler() }
+    }
+
+    // MARK: - Action Coordinator
+
+    var actionCoordinator: Factory<ActionCoordinator> {
+        self { DefaultActionCoordinator() }
     }
 
     // MARK: - Window Manager
@@ -53,38 +65,5 @@ extension Container {
     var clock: Factory<any Clock<Duration>> {
         self { ContinuousClock() }
             .singleton
-    }
-
-    // MARK: - Action Coordinator
-
-    var actionCoordinator: Factory<ActionCoordinatorProtocol> {
-        self { StubActionCoordinator() }
-    }
-}
-
-// MARK: - Protocol Stubs (Temporary)
-
-// These are placeholder protocols and stub implementations.
-// We'll replace these with real protocols and implementations in later steps.
-
-protocol WindowCyclingStrategyProtocol {
-    func cycleWindows(for bundleIdentifier: String) throws
-}
-
-protocol ActionCoordinatorProtocol {
-    func executeAction(for bundleIdentifier: String)
-}
-
-// MARK: - Stub Implementations
-
-class StubWindowCyclingStrategy: WindowCyclingStrategyProtocol {
-    func cycleWindows(for bundleIdentifier: String) throws {
-        print("Stub: Cycle windows for \(bundleIdentifier)")
-    }
-}
-
-class StubActionCoordinator: ActionCoordinatorProtocol {
-    func executeAction(for bundleIdentifier: String) {
-        print("Stub: Execute action for \(bundleIdentifier)")
     }
 }

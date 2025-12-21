@@ -28,4 +28,9 @@ protocol ApplicationManager {
     /// - Parameter bundleIdentifier: The bundle identifier of the app to check
     /// - Returns: True if the application is focused, false otherwise
     func isFocused(bundleIdentifier: String) -> Bool
+
+    /// Hide an application by its bundle identifier
+    /// - Parameter bundleIdentifier: The bundle identifier of the app to hide
+    /// - Throws: Error if the application cannot be hidden
+    func hide(bundleIdentifier: String) throws
 }

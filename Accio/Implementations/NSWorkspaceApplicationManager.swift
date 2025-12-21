@@ -15,6 +15,7 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
         case applicationNotFound(bundleIdentifier: String)
         case launchFailed(bundleIdentifier: String)
         case activationFailed(bundleIdentifier: String)
+        case hideFailed(bundleIdentifier: String)
 
         var errorDescription: String? {
             switch self {
@@ -24,6 +25,8 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
                 return "Failed to launch application '\(bundleIdentifier)'"
             case .activationFailed(let bundleIdentifier):
                 return "Failed to activate application '\(bundleIdentifier)'"
+            case .hideFailed(let bundleIdentifier):
+                return "Failed to hide application '\(bundleIdentifier)'"
             }
         }
     }
@@ -74,6 +77,19 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
             return false
         }
         return frontmostApp.bundleIdentifier == bundleIdentifier
+    }
+
+    func hide(bundleIdentifier: String) throws {
+        // Find the running application
+        guard let app = workspace.runningApplications.first(where: { $0.bundleIdentifier == bundleIdentifier }) else {
+            throw ApplicationManagerError.applicationNotFound(bundleIdentifier: bundleIdentifier)
+        }
+
+        // Hide the application
+        let success = app.hide()
+        if !success {
+            throw ApplicationManagerError.hideFailed(bundleIdentifier: bundleIdentifier)
+        }
     }
 }
 
