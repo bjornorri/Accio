@@ -11,13 +11,26 @@ import FactoryKit
 import FactoryTesting
 @testable import Accio
 
-@Suite(.container)
+@Suite(.container, .serialized)
+@MainActor
 struct DefaultAccessibilityPermissionMonitorTests {
 
-    @Test func monitorReflectsInitialPermissionState_whenFalse() async {
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
+    private func resetAndRegisterMocks(hasPermission: Bool, clock: TestClock<Duration>? = nil) -> MockAccessibilityPermissionProvider {
+        // Reset all scopes and registrations to ensure fresh instances
+        Container.shared.manager.reset(options: .all)
+
+        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: hasPermission)
         Container.shared.permissionProvider.register { mockProvider }
-        Container.shared.clock.register { TestClock() }
+        Container.shared.permissionMonitor.register {
+            DefaultAccessibilityPermissionMonitor()
+        }
+        Container.shared.clock.register { clock ?? TestClock<Duration>() }
+
+        return mockProvider
+    }
+
+    @Test func monitorReflectsInitialPermissionState_whenFalse() async {
+        _ = resetAndRegisterMocks(hasPermission: false)
 
         let monitor = Container.shared.permissionMonitor()
 
@@ -25,9 +38,7 @@ struct DefaultAccessibilityPermissionMonitorTests {
     }
 
     @Test func monitorReflectsInitialPermissionState_whenTrue() async {
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: true)
-        Container.shared.permissionProvider.register { mockProvider }
-        Container.shared.clock.register { TestClock() }
+        _ = resetAndRegisterMocks(hasPermission: true)
 
         let monitor = Container.shared.permissionMonitor()
 
@@ -35,11 +46,8 @@ struct DefaultAccessibilityPermissionMonitorTests {
     }
 
     @Test func monitorPollsAtOneSecondIntervals() async {
-        let clock = TestClock()
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
-
-        Container.shared.clock.register { clock }
-        Container.shared.permissionProvider.register { mockProvider }
+        let clock = TestClock<Duration>()
+        let mockProvider = resetAndRegisterMocks(hasPermission: false, clock: clock)
 
         let monitor = Container.shared.permissionMonitor()
 
@@ -70,11 +78,8 @@ struct DefaultAccessibilityPermissionMonitorTests {
     }
 
     @Test func monitorDetectsPermissionChanges() async {
-        let clock = TestClock()
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
-
-        Container.shared.clock.register { clock }
-        Container.shared.permissionProvider.register { mockProvider }
+        let clock = TestClock<Duration>()
+        let mockProvider = resetAndRegisterMocks(hasPermission: false, clock: clock)
 
         let monitor = Container.shared.permissionMonitor()
 
@@ -109,11 +114,8 @@ struct DefaultAccessibilityPermissionMonitorTests {
     }
 
     @Test func monitorOnlyNotifiesOnChange() async {
-        let clock = TestClock()
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: true)
-
-        Container.shared.clock.register { clock }
-        Container.shared.permissionProvider.register { mockProvider }
+        let clock = TestClock<Duration>()
+        _ = resetAndRegisterMocks(hasPermission: true, clock: clock)
 
         let monitor = Container.shared.permissionMonitor()
 
@@ -147,9 +149,7 @@ struct DefaultAccessibilityPermissionMonitorTests {
     }
 
     @Test func checkPermissionUpdatesImmediately() async {
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
-        Container.shared.permissionProvider.register { mockProvider }
-        Container.shared.clock.register { TestClock() }
+        let mockProvider = resetAndRegisterMocks(hasPermission: false)
 
         let monitor = Container.shared.permissionMonitor()
 
@@ -171,9 +171,7 @@ struct DefaultAccessibilityPermissionMonitorTests {
     }
 
     @Test func requestPermissionUpdatesImmediately() async {
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
-        Container.shared.permissionProvider.register { mockProvider }
-        Container.shared.clock.register { TestClock() }
+        let mockProvider = resetAndRegisterMocks(hasPermission: false)
 
         let monitor = Container.shared.permissionMonitor()
 
@@ -200,11 +198,8 @@ struct DefaultAccessibilityPermissionMonitorTests {
     }
 
     @Test func stopMonitoringPreventsPolling() async {
-        let clock = TestClock()
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
-
-        Container.shared.clock.register { clock }
-        Container.shared.permissionProvider.register { mockProvider }
+        let clock = TestClock<Duration>()
+        let mockProvider = resetAndRegisterMocks(hasPermission: false, clock: clock)
 
         let monitor = Container.shared.permissionMonitor()
 
@@ -237,11 +232,8 @@ struct DefaultAccessibilityPermissionMonitorTests {
     }
 
     @Test func multipleStartMonitoringCallsCreateOnlyOneTask() async {
-        let clock = TestClock()
-        let mockProvider = MockAccessibilityPermissionProvider(hasPermission: false)
-
-        Container.shared.clock.register { clock }
-        Container.shared.permissionProvider.register { mockProvider }
+        let clock = TestClock<Duration>()
+        let mockProvider = resetAndRegisterMocks(hasPermission: false, clock: clock)
 
         let monitor = Container.shared.permissionMonitor()
 
