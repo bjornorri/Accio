@@ -90,8 +90,8 @@ Accio is a macOS menu bar app that lets users bind global hotkeys to application
 ### Protocol Abstractions
 
 ```
-HotkeyManager          → Register/unregister global hotkeys
-ApplicationManager     → Launch, focus, hide apps; check app state; enumerate installed apps
+HotkeyManager          → Register/unregister global hotkeys (supports async handlers)
+ApplicationManager     → Launch (async), focus apps; check app state; enumerate installed apps
 WindowCyclingStrategy  → Trigger window cycling (initially: send Cmd+`, replaceable later)
 AccessibilityPermissionManager → Check/request accessibility permissions
 ActionCoordinator      → Execute hotkey actions based on global behavior settings
@@ -328,24 +328,34 @@ Each step builds a complete, testable feature. You'll have working functionality
 
 1. Create `Protocols/ApplicationManager.swift`
 2. Create `Implementations/NSWorkspaceApplicationManager.swift`:
-   - `launch(bundleIdentifier:)`: Launch Safari
+   - `launch(bundleIdentifier:) async`: Launch Safari (activates immediately)
    - `activate(bundleIdentifier:)`: Focus Safari
    - `isRunning()`, `isFocused()`: Check Safari state
-3. Create `Protocols/HotkeyManager.swift`
+3. Create `Protocols/HotkeyManager.swift` (supports async handlers)
 4. Create `Implementations/KeyboardShortcutsHotkeyManager.swift`:
-   - Register single hardcoded shortcut for Safari
-   - On trigger: launch/focus Safari
-5. Register both with Factory DI
-6. In `AppDelegate.didFinishLaunching`: register the hardcoded Cmd+Shift+S → Safari hotkey
-7. Test: Press Cmd+Shift+S → Safari should launch/focus
+   - Wraps async handlers in Task for KeyboardShortcuts library
+   - Uses `KeyboardShortcuts.removeHandler(for:)` and `.removeAllHandlers()` for cleanup
+5. Create `Core/KeyboardShortcutNames.swift`: Define `.safari` shortcut (Cmd+Shift+S)
+6. Register both with Factory DI
+7. In `AppDelegate.didFinishLaunching`: register the hardcoded Cmd+Shift+S → Safari hotkey
+8. Test: Press Cmd+Shift+S → Safari should launch/focus
 
-**Files**: `Protocols/ApplicationManager.swift`, `Implementations/NSWorkspaceApplicationManager.swift`, `Protocols/HotkeyManager.swift`, `Implementations/KeyboardShortcutsHotkeyManager.swift`, `AppDelegate.swift`
+**Files**: `Protocols/ApplicationManager.swift`, `Implementations/NSWorkspaceApplicationManager.swift`, `Protocols/HotkeyManager.swift`, `Implementations/KeyboardShortcutsHotkeyManager.swift`, `Core/KeyboardShortcutNames.swift`, `AppDelegate.swift`
 
 **Success criteria**:
 
 - ✅ Press Cmd+Shift+S anywhere on system
 - ✅ Safari launches (if not running)
 - ✅ Safari focuses (if running but not focused)
+
+**Implementation notes**:
+
+- `ApplicationManager.launch()` is async because `NSWorkspace.openApplication()` is async
+- Launch configuration sets `activates = true` to immediately focus the app when launching
+- `HotkeyManager` accepts async handlers, wrapping them in `Task` for the synchronous KeyboardShortcuts library
+- KeyboardShortcuts provides `removeHandler(for:)` and `removeAllHandlers()` for proper cleanup
+- Hide functionality deferred to later (not in ApplicationManager protocol yet)
+- macOS 14+ compatibility: `.activateIgnoringOtherApps` is deprecated, use empty options
 
 ---
 
@@ -398,7 +408,7 @@ Each step builds a complete, testable feature. You'll have working functionality
 - Action coordinator that reads behavior settings
 - Safari behavior changes based on settings
 - Window cycling for Safari (using Cmd+`)
-- Hide Safari functionality
+- Hide app functionality (deferred - not implemented in Step 5)
 
 **Tasks**:
 
@@ -420,15 +430,14 @@ Each step builds a complete, testable feature. You'll have working functionality
    - Safari not running + "Do nothing" → nothing happens
    - Safari running but not focused + "Focus app" → focuses
    - Safari focused + "Cycle Windows" → cycles (if multiple windows)
-   - Safari focused + "Hide app" → hides
+   - Safari focused + "Hide app" → (deferred - implement hide() in ApplicationManager first)
 
 **Files**: `Protocols/WindowCyclingStrategy.swift`, `Implementations/SystemWindowCyclingStrategy.swift`, `Protocols/ActionCoordinator.swift`, `Implementations/DefaultActionCoordinator.swift`, `AppDelegate.swift`
 
 **Success criteria**:
 
-- ✅ All behavior setting combinations work for Safari
+- ✅ All behavior setting combinations work for Safari (except hide - deferred)
 - ✅ Window cycling works with multiple Safari windows
-- ✅ Hide works when Safari is focused
 
 ---
 
