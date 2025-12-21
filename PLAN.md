@@ -41,11 +41,13 @@ Accio is a macOS menu bar app that lets users bind global hotkeys to application
 
 ### Window Management Strategy
 
-**System Cmd+` for window cycling** (initial implementation)
+**Read user's system shortcut for window cycling**
 
-- Use native macOS window cycling behavior
-- Send Cmd+` programmatically via CGEvent when needed
-- **Interface design**: Keep protocol flexible to allow custom implementation later
+- Read the user's configured "Move focus to next window" shortcut from `~/Library/Preferences/com.apple.symbolichotkeys.plist` (key ID `27`)
+- Parse the shortcut parameters (key code + modifier flags)
+- Trigger that exact key combo via CGEvent
+- Fall back to Cmd+` if the shortcut is disabled or missing
+- **Benefit**: Works correctly even if user has customized their window cycling shortcut
 
 ## Key Technical Decisions
 
@@ -57,7 +59,7 @@ Accio is a macOS menu bar app that lets users bind global hotkeys to application
 | **Launch at Login**      | LaunchAtLogin-Modern                      | Modern SMAppService API wrapper                                          |
 | **UI Pattern**           | MenuBarExtra + Custom Settings Window     | Menu bar for quick access, custom window for full dock/switcher control  |
 | **Architecture**         | Protocol-based with Factory DI            | Maximum testability, mockable interfaces                                 |
-| **Window Cycling**       | System Cmd+` (initially)                  | Simple, reliable, replaceable via protocol later                         |
+| **Window Cycling**       | Read user's system shortcut               | Respects user customization, falls back to Cmd+`                         |
 | **App Sandbox**          | **DISABLED** (critical)                   | Required for global hotkeys and Accessibility API                        |
 | **Distribution**         | Outside Mac App Store                     | Sandbox incompatible; use Developer ID + notarization                    |
 
@@ -92,7 +94,7 @@ Accio is a macOS menu bar app that lets users bind global hotkeys to application
 ```
 HotkeyManager          → Register/unregister global hotkeys (supports async handlers)
 ApplicationManager     → Launch (async), focus apps; check app state; enumerate installed apps
-WindowCyclingStrategy  → Trigger window cycling (initially: send Cmd+`, replaceable later)
+WindowCycler            → Trigger window cycling (reads user's system shortcut, falls back to Cmd+`)
 AccessibilityPermissionManager → Check/request accessibility permissions
 ActionCoordinator      → Execute hotkey actions based on global behavior settings
 ```
@@ -159,8 +161,8 @@ extension Container {
         self { NSWorkspaceApplicationManager() }
     }
 
-    var windowCyclingStrategy: Factory<WindowCyclingStrategy> {
-        self { SystemWindowCyclingStrategy() }  // Sends Cmd+`
+    var windowCycler: Factory<WindowCycler> {
+        self { SystemWindowCycler() }  // Reads user's system shortcut
     }
 
     var permissionManager: Factory<AccessibilityPermissionManager> {
@@ -407,37 +409,47 @@ Each step builds a complete, testable feature. You'll have working functionality
 
 - Action coordinator that reads behavior settings
 - Safari behavior changes based on settings
-- Window cycling for Safari (using Cmd+`)
-- Hide app functionality (deferred - not implemented in Step 5)
+- Window cycling using the user's configured system shortcut
+- Hide app functionality
 
 **Tasks**:
 
-1. Create `Protocols/WindowCyclingStrategy.swift`
-2. Create `Implementations/SystemWindowCyclingStrategy.swift`:
-   - Send Cmd+` via CGEvent
-3. Create `Protocols/ActionCoordinator.swift`
-4. Create `Implementations/DefaultActionCoordinator.swift`:
-   - Inject `ApplicationManager` and `WindowCyclingStrategy`
+1. Create `Protocols/WindowCycler.swift`
+2. Create `Core/SystemShortcutReader.swift`:
+   - Read user's "Move focus to next window" shortcut from `~/Library/Preferences/com.apple.symbolichotkeys.plist`
+   - Key ID `27` = "Move focus to next window"
+   - Parse parameters array: `[asciiCode, virtualKeyCode, modifierFlags]`
+   - Fall back to Cmd+` (key code 50, modifiers 1048576) if disabled or missing
+3. Create `Implementations/SystemWindowCycler.swift`:
+   - Inject `SystemShortcutReader` to get user's configured shortcut
+   - Create and post CGEvent with the correct key code and modifiers
+4. Create `Protocols/ActionCoordinator.swift`
+5. Create `Implementations/DefaultActionCoordinator.swift`:
+   - Inject `ApplicationManager` and `WindowCycler`
    - `executeAction(for bundleIdentifier:, settings:)`:
-     - Check if Safari is running and focused
-     - Apply appropriate action based on settings
-5. Register with Factory DI
-6. Update hardcoded Safari hotkey in `AppDelegate`:
+     - Check if app is running → apply `whenNotRunning` action
+     - Check if app is focused → apply `whenNotFocused` action
+     - If focused → apply `whenFocused` action
+6. Add `hide(bundleIdentifier:)` to `ApplicationManager` protocol and implementation
+7. Register with Factory DI (remove stub implementations)
+8. Update `AppDelegate.handleSafariHotkey()`:
    - Read behavior settings from Defaults
-   - Call `ActionCoordinator.executeAction()` instead of directly launching
-7. Test all combinations:
+   - Call `ActionCoordinator.executeAction()` instead of direct launch/activate
+9. Test all combinations:
    - Safari not running + "Launch app" → launches
    - Safari not running + "Do nothing" → nothing happens
    - Safari running but not focused + "Focus app" → focuses
    - Safari focused + "Cycle Windows" → cycles (if multiple windows)
-   - Safari focused + "Hide app" → (deferred - implement hide() in ApplicationManager first)
+   - Safari focused + "Hide app" → hides Safari
+   - Change system shortcut in System Settings → verify cycling still works
 
-**Files**: `Protocols/WindowCyclingStrategy.swift`, `Implementations/SystemWindowCyclingStrategy.swift`, `Protocols/ActionCoordinator.swift`, `Implementations/DefaultActionCoordinator.swift`, `AppDelegate.swift`
+**Files**: `Protocols/WindowCycler.swift`, `Core/SystemShortcutReader.swift`, `Implementations/SystemWindowCycler.swift`, `Protocols/ActionCoordinator.swift`, `Implementations/DefaultActionCoordinator.swift`, `Protocols/ApplicationManager.swift`, `Implementations/NSWorkspaceApplicationManager.swift`, `Core/DependencyContainer.swift`, `AppDelegate.swift`
 
 **Success criteria**:
 
-- ✅ All behavior setting combinations work for Safari (except hide - deferred)
+- ✅ All behavior setting combinations work for Safari
 - ✅ Window cycling works with multiple Safari windows
+- ✅ Window cycling respects user's custom system shortcut
 
 ---
 
@@ -615,7 +627,7 @@ Each step builds a complete, testable feature. You'll have working functionality
 
 6. **`/Users/bjornorri/Developer/Accio/Accio/Implementations/DefaultActionCoordinator.swift`**
    - Executes hotkey actions based on app state and global behavior settings
-   - Coordinates ApplicationManager and WindowCyclingStrategy
+   - Coordinates ApplicationManager and WindowCycler
    - Decision logic for whenNotRunning/whenNotFocused/whenFocused
 
 ### UI Files
@@ -649,14 +661,14 @@ Accio/
 │   ├── Protocols/
 │   │   ├── HotkeyManager.swift
 │   │   ├── ApplicationManager.swift
-│   │   ├── WindowCyclingStrategy.swift (replaceable implementation)
+│   │   ├── WindowCycler.swift
 │   │   ├── AccessibilityPermissionManager.swift
 │   │   └── ActionCoordinator.swift
 │   │
 │   ├── Implementations/
 │   │   ├── KeyboardShortcutsHotkeyManager.swift
 │   │   ├── NSWorkspaceApplicationManager.swift
-│   │   ├── SystemWindowCyclingStrategy.swift (sends Cmd+`)
+│   │   ├── SystemWindowCycler.swift (reads user's system shortcut)
 │   │   ├── AXAccessibilityPermissionManager.swift
 │   │   └── DefaultActionCoordinator.swift (behavior settings logic)
 │   │
@@ -665,6 +677,7 @@ Accio/
 │   │   ├── WindowManager.swift (settings window lifecycle)
 │   │   ├── BindingOrchestrator.swift (central coordinator)
 │   │   ├── DefaultsKeys.swift (Defaults library keys)
+│   │   ├── SystemShortcutReader.swift (reads system keyboard shortcuts)
 │   │   └── Errors.swift
 │   │
 │   ├── Views/
@@ -680,7 +693,7 @@ Accio/
 │   ├── Mocks/
 │   │   ├── MockHotkeyManager.swift
 │   │   ├── MockApplicationManager.swift
-│   │   ├── MockWindowCyclingStrategy.swift
+│   │   ├── MockWindowCycler.swift
 │   │   └── MockPermissionManager.swift
 │   ├── UnitTests/
 │   │   ├── ActionCoordinatorTests.swift
