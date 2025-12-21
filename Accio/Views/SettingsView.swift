@@ -7,11 +7,17 @@
 
 import SwiftUI
 import FactoryKit
+import Defaults
+import LaunchAtLogin
 
 /// Settings view with accessibility permissions and app preferences
 struct SettingsView: View {
     @Injected(\.permissionMonitor) private var permissionMonitor: AccessibilityPermissionMonitor
     @State private var hasPermission: Bool = false
+    @State private var launchAtLoginRefreshTrigger = false
+
+    // Behavior settings using Defaults
+    @Default(.appBehaviorSettings) private var behaviorSettings
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -45,18 +51,132 @@ struct SettingsView: View {
                 .padding(.vertical, 12)
             }
 
-            Spacer()
+            // Behavior Settings Section
+            GroupBox(label: Text("Behavior").font(.headline)) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Launch at login
+                    VStack(alignment: .leading, spacing: 4) {
+                        LaunchAtLogin.Toggle {
+                            Text("Launch at login")
+                        }
+                        .toggleStyle(.checkbox)
+                        .id(launchAtLoginRefreshTrigger)
+
+                        Text("Automatically start Accio when you log in")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 12)
+
+                    Divider()
+
+                    // Show notifications
+                    VStack(alignment: .leading, spacing: 4) {
+                        Toggle("Show notifications", isOn: $behaviorSettings.showNotificationWhenLaunching)
+                            .toggleStyle(.checkbox)
+
+                        Text("Display a notification when launching apps")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 12)
+
+                    Divider()
+
+                    // When app is not running
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("When app is not running")
+                            Text("Action to take when the target app is not running")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer()
+
+                        Picker("", selection: $behaviorSettings.whenNotRunning) {
+                            ForEach(NotRunningAction.allCases, id: \.self) { action in
+                                Text(action.displayName).tag(action)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 150)
+                        .fixedSize()
+                    }
+                    .padding(.vertical, 12)
+
+                    Divider()
+
+                    // When app is running but not focused
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("When app is not focused")
+                            Text("Action to take when the target app is running but not focused")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer()
+
+                        Picker("", selection: $behaviorSettings.whenNotFocused) {
+                            ForEach(NotFocusedAction.allCases, id: \.self) { action in
+                                Text(action.displayName).tag(action)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 150)
+                        .fixedSize()
+                    }
+                    .padding(.vertical, 12)
+
+                    Divider()
+
+                    // When app is already focused
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("When app is focused")
+                            Text("Action to take when the target app is already focused")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer()
+
+                        Picker("", selection: $behaviorSettings.whenFocused) {
+                            ForEach(FocusedAction.allCases, id: \.self) { action in
+                                Text(action.displayName).tag(action)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 150)
+                        .fixedSize()
+                    }
+                    .padding(.vertical, 12)
+                }
+                .padding(.horizontal, 8)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 20)
         .padding(.bottom, 32)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .onAppear {
             // Register callback and check permission
             permissionMonitor.onPermissionChange { newValue in
                 hasPermission = newValue
             }
             permissionMonitor.checkPermission()
+
+            // Refresh launch at login state
+            launchAtLoginRefreshTrigger.toggle()
         }
         .onDisappear {
             // Stop monitoring when view disappears (window closed)
@@ -66,6 +186,9 @@ struct SettingsView: View {
             // Stop monitoring and check permission when window gains focus
             permissionMonitor.stopMonitoring()
             permissionMonitor.checkPermission()
+
+            // Refresh launch at login state
+            launchAtLoginRefreshTrigger.toggle()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
             // Start monitoring when window loses focus (user might be in System Settings)

@@ -11,12 +11,8 @@ import SwiftUI
 /// Custom settings window that hosts the SwiftUI SettingsView
 class SettingsWindow: NSWindow {
     init() {
-        // Create window with fixed size
-        let windowSize = NSSize(width: 600, height: 400)
-        let windowRect = NSRect(origin: .zero, size: windowSize)
-
         super.init(
-            contentRect: windowRect,
+            contentRect: .zero,
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -24,12 +20,15 @@ class SettingsWindow: NSWindow {
 
         // Configure window
         self.title = "Accio Settings"
-        self.center() // Center on screen
 
         // Host SwiftUI view
         let settingsView = SettingsView()
         let hostingController = NSHostingController(rootView: settingsView)
-        self.contentView = hostingController.view
+        self.contentViewController = hostingController
+
+        // Set content size (this sizes the content area, excluding title bar)
+        self.setContentSize(NSSize(width: 600, height: 450))
+        self.center() // Center on screen
 
         // Make window key and order front on creation
         self.isReleasedWhenClosed = false // Keep window instance alive when closed
