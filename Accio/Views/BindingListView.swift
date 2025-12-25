@@ -54,9 +54,9 @@ struct BindingListView: View {
             .background(Color(nsColor: .windowBackgroundColor))
         }
         .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(6)
+        .cornerRadius(12)
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
         )
         .padding()
