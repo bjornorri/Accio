@@ -16,6 +16,7 @@ struct BindingListView: View {
     @Default(.hotkeyBindings) private var bindings
     @State private var selection: Set<HotkeyBinding.ID> = []
     @State private var refreshTrigger = false
+    @State private var newlyAddedBindingID: HotkeyBinding.ID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -125,21 +126,36 @@ struct BindingListView: View {
     }
 
     private var bindingsList: some View {
-        List(selection: $selection) {
-            ForEach(bindings) { binding in
-                BindingRowView(
-                    binding: binding,
-                    appMetadataProvider: appMetadataProvider,
-                    refreshTrigger: refreshTrigger
-                )
-                .tag(binding.id)
+        ScrollViewReader { proxy in
+            List(selection: $selection) {
+                ForEach(bindings) { binding in
+                    BindingRowView(
+                        binding: binding,
+                        appMetadataProvider: appMetadataProvider,
+                        refreshTrigger: refreshTrigger,
+                        shouldFocus: binding.id == newlyAddedBindingID
+                    )
+                    .tag(binding.id)
+                    .id(binding.id)
+                }
+                .onMove { source, destination in
+                    bindings.move(fromOffsets: source, toOffset: destination)
+                }
             }
-            .onMove { source, destination in
-                bindings.move(fromOffsets: source, toOffset: destination)
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .onChange(of: newlyAddedBindingID) { _, newID in
+                if let id = newID {
+                    withAnimation {
+                        proxy.scrollTo(id, anchor: .top)
+                    }
+                    // Clear the flag after a short delay
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        newlyAddedBindingID = nil
+                    }
+                }
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
     }
 
     private func addBinding() {
@@ -172,8 +188,9 @@ struct BindingListView: View {
                     appBundleIdentifier: bundleIdentifier,
                     appName: appName
                 )
-                bindings.append(newBinding)
+                bindings.insert(newBinding, at: 0)
                 selection = [id]
+                newlyAddedBindingID = id
             }
         }
     }
@@ -199,6 +216,7 @@ struct BindingRowView: View {
     let binding: HotkeyBinding
     let appMetadataProvider: AppMetadataProvider
     let refreshTrigger: Bool
+    let shouldFocus: Bool
 
     private var isAppInstalled: Bool {
         // refreshTrigger ensures this is re-evaluated when window becomes active
@@ -242,9 +260,27 @@ struct BindingRowView: View {
             Spacer()
 
             // Shortcut recorder
-            KeyboardShortcuts.Recorder(for: shortcutName)
+            FocusableRecorder(name: shortcutName, shouldFocus: shouldFocus)
         }
         .padding(.vertical, 6)
+    }
+}
+
+/// A keyboard shortcut recorder that can be focused programmatically
+struct FocusableRecorder: NSViewRepresentable {
+    let name: KeyboardShortcuts.Name
+    let shouldFocus: Bool
+
+    func makeNSView(context: Context) -> KeyboardShortcuts.RecorderCocoa {
+        KeyboardShortcuts.RecorderCocoa(for: name)
+    }
+
+    func updateNSView(_ recorder: KeyboardShortcuts.RecorderCocoa, context: Context) {
+        if shouldFocus {
+            DispatchQueue.main.async {
+                recorder.window?.makeFirstResponder(recorder)
+            }
+        }
     }
 }
 
