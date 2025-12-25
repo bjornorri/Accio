@@ -19,11 +19,33 @@ struct BindingListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Column headers
+            HStack(spacing: 12) {
+                Text("Application")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 8)
+
+                Text("Shortcut")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(width: 140, alignment: .trailing)
+                    .padding(.trailing, 8)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
+            .background(Color(nsColor: .windowBackgroundColor).opacity(0.5))
+
+            Divider()
+
             if bindings.isEmpty {
                 emptyStateView
             } else {
                 bindingsList
             }
+
+            Divider()
 
             // +/- toolbar at bottom
             HStack(spacing: 0) {
@@ -31,7 +53,8 @@ struct BindingListView: View {
                     addBinding()
                 } label: {
                     Image(systemName: "plus")
-                        .frame(width: 24, height: 24)
+                        .fontWeight(.medium)
+                        .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.borderless)
 
@@ -42,7 +65,8 @@ struct BindingListView: View {
                     removeSelected()
                 } label: {
                     Image(systemName: "minus")
-                        .frame(width: 24, height: 24)
+                        .fontWeight(.medium)
+                        .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.borderless)
                 .disabled(selection.isEmpty)
@@ -197,10 +221,10 @@ struct BindingRowView: View {
             if let icon = appIcon {
                 Image(nsImage: icon)
                     .resizable()
-                    .frame(width: 20, height: 20)
+                    .frame(width: 32, height: 32)
             } else {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .frame(width: 20, height: 20)
+                    .frame(width: 32, height: 32)
                     .foregroundColor(.yellow)
             }
 
@@ -220,7 +244,7 @@ struct BindingRowView: View {
             // Shortcut recorder
             KeyboardShortcuts.Recorder(for: shortcutName)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 6)
     }
 }
 
