@@ -10,7 +10,7 @@ import FactoryKit
 import LaunchAtLogin
 import SwiftUI
 
-/// Main settings view with tabs for General and Hotkeys settings
+/// Main settings view with tabs for General and Shortcuts settings
 struct SettingsView: View {
     var body: some View {
         TabView {
@@ -21,7 +21,7 @@ struct SettingsView: View {
 
             BindingListView()
                 .tabItem {
-                    Label("Hotkeys", systemImage: "keyboard")
+                    Label("Shortcuts", systemImage: "keyboard")
                 }
         }
         .frame(minWidth: 500, minHeight: 450)

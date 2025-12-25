@@ -91,7 +91,7 @@ struct BindingListView: View {
 
     private var emptyStateView: some View {
         VStack(spacing: 8) {
-            Text("No Hotkeys")
+            Text("No Shortcuts")
                 .foregroundColor(.secondary)
             Text("Click + to add an application")
                 .font(.caption)
