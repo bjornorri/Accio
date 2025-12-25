@@ -12,19 +12,95 @@ import SwiftUI
 
 /// Main settings view with tabs for General and Shortcuts settings
 struct SettingsView: View {
+    fileprivate enum Tab: CaseIterable {
+        case general
+        case shortcuts
+    }
+
+    @State private var selectedTab: Tab = .general
+
+    fileprivate static let allTabs = Tab.allCases
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             GeneralSettingsView()
                 .tabItem {
                     Label("General", systemImage: "gear")
                 }
+                .tag(Tab.general)
 
             BindingListView()
                 .tabItem {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
+                .tag(Tab.shortcuts)
         }
         .frame(minWidth: 500, minHeight: 450)
+        .modifier(TabNavigationShortcutsModifier(selectedTab: $selectedTab))
+    }
+}
+
+/// Modifier that adds Cmd+1/2/... and Cmd+Shift+{/} keyboard shortcuts for tab navigation
+private struct TabNavigationShortcutsModifier: ViewModifier {
+    @Binding var selectedTab: SettingsView.Tab
+    @State private var monitor: Any?
+
+    private var tabs: [SettingsView.Tab] { SettingsView.allTabs }
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                    // Only handle when settings window is key
+                    guard let window = event.window,
+                          window.isKeyWindow,
+                          event.modifierFlags.contains(.command),
+                          let characters = event.charactersIgnoringModifiers else {
+                        return event
+                    }
+
+                    let hasShift = event.modifierFlags.contains(.shift)
+                    let hasOption = event.modifierFlags.contains(.option)
+
+                    // Cmd+1, Cmd+2, etc. (no shift, no option)
+                    if !hasShift && !hasOption, let number = Int(characters) {
+                        let index = number - 1 // Cmd+1 = index 0, Cmd+2 = index 1, etc.
+                        if tabs.indices.contains(index) {
+                            selectedTab = tabs[index]
+                            return nil
+                        }
+                    }
+
+                    // Cmd+Shift+{ / Cmd+Shift+} (shift, no option) - with wrap around
+                    if hasShift && !hasOption {
+                        guard let currentIndex = tabs.firstIndex(of: selectedTab) else {
+                            return event
+                        }
+
+                        switch characters {
+                        case "{":
+                            let newIndex = currentIndex == tabs.startIndex
+                                ? tabs.index(before: tabs.endIndex)
+                                : tabs.index(before: currentIndex)
+                            selectedTab = tabs[newIndex]
+                            return nil
+                        case "}":
+                            let newIndex = tabs.index(after: currentIndex)
+                            selectedTab = newIndex == tabs.endIndex ? tabs[tabs.startIndex] : tabs[newIndex]
+                            return nil
+                        default:
+                            break
+                        }
+                    }
+
+                    return event
+                }
+            }
+            .onDisappear {
+                if let monitor = monitor {
+                    NSEvent.removeMonitor(monitor)
+                }
+            }
     }
 }
 
