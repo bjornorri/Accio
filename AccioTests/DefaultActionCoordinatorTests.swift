@@ -187,18 +187,22 @@ class MockApplicationManager: ApplicationManager {
         launchCalls.append(bundleIdentifier)
     }
 
+    @MainActor
     func activate(bundleIdentifier: String) throws {
         activateCalls.append(bundleIdentifier)
     }
 
+    @MainActor
     func isRunning(bundleIdentifier: String) -> Bool {
         return isRunningValue
     }
 
+    @MainActor
     func isFocused(bundleIdentifier: String) -> Bool {
         return isFocusedValue
     }
 
+    @MainActor
     func hide(bundleIdentifier: String) throws {
         hideCalls.append(bundleIdentifier)
     }

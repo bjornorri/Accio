@@ -14,8 +14,10 @@ class DefaultActionCoordinator: ActionCoordinator {
     @Injected(\.windowCycler) private var windowCycler: WindowCycler
 
     func executeAction(for bundleIdentifier: String, settings: AppBehaviorSettings) async {
-        // Check if app is running
-        let isRunning = applicationManager.isRunning(bundleIdentifier: bundleIdentifier)
+        // Check if app is running (on MainActor for accurate state)
+        let isRunning = await MainActor.run {
+            applicationManager.isRunning(bundleIdentifier: bundleIdentifier)
+        }
 
         if !isRunning {
             // App is not running - apply whenNotRunning action
@@ -33,40 +35,34 @@ class DefaultActionCoordinator: ActionCoordinator {
             return
         }
 
-        // App is running - check if focused
-        let isFocused = applicationManager.isFocused(bundleIdentifier: bundleIdentifier)
+        // App is running - check state and act atomically on MainActor
+        do {
+            try await MainActor.run {
+                let isFocused = applicationManager.isFocused(bundleIdentifier: bundleIdentifier)
 
-        if !isFocused {
-            // App is running but not focused - apply whenNotFocused action
-            switch settings.whenNotFocused {
-            case .focusApp:
-                do {
-                    try applicationManager.activate(bundleIdentifier: bundleIdentifier)
-                } catch {
-                    print("Failed to activate app: \(error)")
+                if !isFocused {
+                    // App is running but not focused - apply whenNotFocused action
+                    switch settings.whenNotFocused {
+                    case .focusApp:
+                        try applicationManager.activate(bundleIdentifier: bundleIdentifier)
+                    case .doNothing:
+                        break
+                    }
+                    return
                 }
-            case .doNothing:
-                return
-            }
-            return
-        }
 
-        // App is running and focused - apply whenFocused action
-        switch settings.whenFocused {
-        case .cycleWindows:
-            do {
-                try windowCycler.cycleWindows(for: bundleIdentifier)
-            } catch {
-                print("Failed to cycle windows: \(error)")
+                // App is running and focused - apply whenFocused action
+                switch settings.whenFocused {
+                case .cycleWindows:
+                    try windowCycler.cycleWindows(for: bundleIdentifier)
+                case .hideApp:
+                    try applicationManager.hide(bundleIdentifier: bundleIdentifier)
+                case .doNothing:
+                    break
+                }
             }
-        case .hideApp:
-            do {
-                try applicationManager.hide(bundleIdentifier: bundleIdentifier)
-            } catch {
-                print("Failed to hide app: \(error)")
-            }
-        case .doNothing:
-            return
+        } catch {
+            print("Action failed: \(error)")
         }
     }
 }

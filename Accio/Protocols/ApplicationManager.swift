@@ -17,20 +17,20 @@ protocol ApplicationManager {
     /// Activate (focus) an application by its bundle identifier
     /// - Parameter bundleIdentifier: The bundle identifier of the app to activate
     /// - Throws: Error if the application cannot be activated
-    func activate(bundleIdentifier: String) throws
+    @MainActor func activate(bundleIdentifier: String) throws
 
     /// Check if an application is currently running
     /// - Parameter bundleIdentifier: The bundle identifier of the app to check
     /// - Returns: True if the application is running, false otherwise
-    func isRunning(bundleIdentifier: String) -> Bool
+    @MainActor func isRunning(bundleIdentifier: String) -> Bool
 
     /// Check if an application is currently focused (frontmost)
     /// - Parameter bundleIdentifier: The bundle identifier of the app to check
     /// - Returns: True if the application is focused, false otherwise
-    func isFocused(bundleIdentifier: String) -> Bool
+    @MainActor func isFocused(bundleIdentifier: String) -> Bool
 
     /// Hide an application by its bundle identifier
     /// - Parameter bundleIdentifier: The bundle identifier of the app to hide
     /// - Throws: Error if the application cannot be hidden
-    func hide(bundleIdentifier: String) throws
+    @MainActor func hide(bundleIdentifier: String) throws
 }

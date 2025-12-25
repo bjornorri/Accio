@@ -15,4 +15,10 @@ extension Defaults.Keys {
         "appBehaviorSettings",
         default: .default
     )
+
+    /// Array of hotkey bindings
+    static let hotkeyBindings = Key<[HotkeyBinding]>(
+        "hotkeyBindings",
+        default: []
+    )
 }

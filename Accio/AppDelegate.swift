@@ -6,19 +6,16 @@
 //
 
 import AppKit
-import Defaults
 import FactoryKit
-import KeyboardShortcuts
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
+    private var bindingOrchestrator: BindingOrchestrator?
 
     // Inject dependencies via Factory
     @Injected(\.windowManager) private var windowManager: WindowManager
     @Injected(\.permissionProvider) private var permissionProvider: AccessibilityPermissionProvider
-    @Injected(\.hotkeyManager) private var hotkeyManager: HotkeyManager
-    @Injected(\.actionCoordinator) private var actionCoordinator: ActionCoordinator
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set initial activation policy to accessory (hidden from dock/switcher)
@@ -27,8 +24,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create menu bar item
         setupMenuBar()
 
-        // Register hardcoded Safari hotkey (Cmd+Shift+S)
-        registerSafariHotkey()
+        // Initialize the binding orchestrator (manages all hotkey bindings)
+        bindingOrchestrator = BindingOrchestrator()
 
         // Check accessibility permission and open settings if not granted
         if !permissionProvider.hasPermission {
@@ -57,18 +54,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Quit Accio", action: #selector(quit), keyEquivalent: ""))
 
         statusItem?.menu = menu
-    }
-
-    private func registerSafariHotkey() {
-        hotkeyManager.register(name: KeyboardShortcuts.Name.safari.rawValue) { [weak self] in
-            guard let self = self else { return }
-            await self.handleSafariHotkey()
-        }
-    }
-
-    private func handleSafariHotkey() async {
-        let settings = Defaults[.appBehaviorSettings]
-        await actionCoordinator.executeAction(for: "com.apple.Safari", settings: settings)
     }
 
     @objc private func openSettings() {

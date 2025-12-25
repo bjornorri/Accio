@@ -48,30 +48,21 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
         }
     }
 
+    @MainActor
     func activate(bundleIdentifier: String) throws {
-        // Find the running application
-        guard let app = workspace.runningApplications.first(where: { $0.bundleIdentifier == bundleIdentifier }) else {
+        // Open the app to bring it to front
+        guard let appURL = workspace.urlForApplication(withBundleIdentifier: bundleIdentifier) else {
             throw ApplicationManagerError.applicationNotFound(bundleIdentifier: bundleIdentifier)
         }
-
-        // Activate the application
-        let success: Bool
-        if #available(macOS 14.0, *) {
-            // On macOS 14+, ignoringOtherApps has no effect and is deprecated
-            success = app.activate(options: [])
-        } else {
-            // On macOS 13 and earlier, preserve previous behavior
-            success = app.activate(options: [.activateIgnoringOtherApps])
-        }
-        if !success {
-            throw ApplicationManagerError.activationFailed(bundleIdentifier: bundleIdentifier)
-        }
+        workspace.open(appURL)
     }
 
+    @MainActor
     func isRunning(bundleIdentifier: String) -> Bool {
         return workspace.runningApplications.contains { $0.bundleIdentifier == bundleIdentifier }
     }
 
+    @MainActor
     func isFocused(bundleIdentifier: String) -> Bool {
         guard let frontmostApp = workspace.frontmostApplication else {
             return false
@@ -79,6 +70,7 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
         return frontmostApp.bundleIdentifier == bundleIdentifier
     }
 
+    @MainActor
     func hide(bundleIdentifier: String) throws {
         // Find the running application
         guard let app = workspace.runningApplications.first(where: { $0.bundleIdentifier == bundleIdentifier }) else {
