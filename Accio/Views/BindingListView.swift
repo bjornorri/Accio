@@ -5,14 +5,17 @@
 
 import AppKit
 import Defaults
+import FactoryKit
 import KeyboardShortcuts
 import SwiftUI
 import UniformTypeIdentifiers
 
 /// A view displaying hotkey bindings in macOS Settings style
 struct BindingListView: View {
+    @Injected(\.appMetadataProvider) private var appMetadataProvider
     @Default(.hotkeyBindings) private var bindings
     @State private var selection: HotkeyBinding.ID?
+    @State private var refreshTrigger = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -57,6 +60,33 @@ struct BindingListView: View {
                 .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
         )
         .padding()
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            // Update cached app metadata for installed apps, then trigger refresh
+            updateAppMetadata()
+            refreshTrigger.toggle()
+        }
+    }
+
+    private func updateAppMetadata() {
+        var updated = false
+        var updatedBindings = bindings
+
+        for (index, binding) in updatedBindings.enumerated() {
+            if let currentName = appMetadataProvider.appName(for: binding.appBundleIdentifier),
+               binding.appName != currentName {
+                updatedBindings[index] = HotkeyBinding(
+                    id: binding.id,
+                    shortcutName: binding.shortcutName,
+                    appBundleIdentifier: binding.appBundleIdentifier,
+                    appName: currentName
+                )
+                updated = true
+            }
+        }
+
+        if updated {
+            bindings = updatedBindings
+        }
     }
 
     private var emptyStateView: some View {
@@ -73,8 +103,12 @@ struct BindingListView: View {
     private var bindingsList: some View {
         List(selection: $selection) {
             ForEach(bindings) { binding in
-                BindingRowView(binding: binding)
-                    .tag(binding.id)
+                BindingRowView(
+                    binding: binding,
+                    appMetadataProvider: appMetadataProvider,
+                    refreshTrigger: refreshTrigger
+                )
+                .tag(binding.id)
             }
         }
         .listStyle(.plain)
@@ -99,11 +133,17 @@ struct BindingListView: View {
                     return
                 }
 
+                // Capture app name at creation time
+                let appName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+                    ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String
+                    ?? url.deletingPathExtension().lastPathComponent
+
                 let id = UUID()
                 let newBinding = HotkeyBinding(
                     id: id,
                     shortcutName: "binding-\(id.uuidString)",
-                    appBundleIdentifier: bundleIdentifier
+                    appBundleIdentifier: bundleIdentifier,
+                    appName: appName
                 )
                 bindings.append(newBinding)
                 selection = id
@@ -130,22 +170,18 @@ struct BindingListView: View {
 /// A row displaying app icon, name, and shortcut recorder
 struct BindingRowView: View {
     let binding: HotkeyBinding
+    let appMetadataProvider: AppMetadataProvider
+    let refreshTrigger: Bool
 
-    private var appName: String {
-        if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: binding.appBundleIdentifier),
-           let bundle = Bundle(url: appURL) {
-            return bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
-                ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String
-                ?? appURL.deletingPathExtension().lastPathComponent
-        }
-        return binding.appBundleIdentifier
+    private var isAppInstalled: Bool {
+        // refreshTrigger ensures this is re-evaluated when window becomes active
+        _ = refreshTrigger
+        return appMetadataProvider.isInstalled(binding.appBundleIdentifier)
     }
 
     private var appIcon: NSImage? {
-        if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: binding.appBundleIdentifier) {
-            return NSWorkspace.shared.icon(forFile: appURL.path)
-        }
-        return nil
+        _ = refreshTrigger
+        return appMetadataProvider.appIcon(for: binding.appBundleIdentifier)
     }
 
     private var shortcutName: KeyboardShortcuts.Name {
@@ -160,14 +196,21 @@ struct BindingRowView: View {
                     .resizable()
                     .frame(width: 20, height: 20)
             } else {
-                Image(systemName: "app")
+                Image(systemName: "exclamationmark.triangle.fill")
                     .frame(width: 20, height: 20)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.yellow)
             }
 
-            // App name
-            Text(appName)
+            // App name (use cached name from binding)
+            Text(binding.appName)
                 .lineLimit(1)
+                .foregroundColor(isAppInstalled ? .primary : .secondary)
+
+            if !isAppInstalled {
+                Text("(Not Installed)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
 
             Spacer()
 

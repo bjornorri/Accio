@@ -11,6 +11,12 @@ import Foundation
 // MARK: - Dependency Container
 
 extension Container {
+    // MARK: - App Metadata Provider
+
+    var appMetadataProvider: Factory<AppMetadataProvider> {
+        self { NSWorkspaceAppMetadataProvider() }
+    }
+
     // MARK: - Application Manager
 
     var applicationManager: Factory<ApplicationManager> {
