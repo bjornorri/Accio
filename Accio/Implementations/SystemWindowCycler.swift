@@ -10,7 +10,7 @@ import FactoryKit
 import Foundation
 
 /// Window cycler that triggers the system's window cycling shortcut
-class SystemWindowCycler: WindowCycler {
+final class SystemWindowCycler: WindowCycler {
     @Injected(\.systemShortcutReader) private var shortcutReader: SystemShortcutReader
     @Injected(\.keyboardEventPoster) private var eventPoster: KeyboardEventPoster
 

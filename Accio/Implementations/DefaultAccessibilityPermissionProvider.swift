@@ -8,7 +8,7 @@
 import ApplicationServices
 import Foundation
 
-class DefaultAccessibilityPermissionProvider: AccessibilityPermissionProvider {
+final class DefaultAccessibilityPermissionProvider: AccessibilityPermissionProvider {
     
     var hasPermission: Bool {
         AXIsProcessTrusted()

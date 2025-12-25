@@ -9,7 +9,7 @@ import FactoryKit
 import Foundation
 
 /// Observable accessibility permission manager with on-demand monitoring
-class DefaultAccessibilityPermissionMonitor: AccessibilityPermissionMonitor {
+final class DefaultAccessibilityPermissionMonitor: AccessibilityPermissionMonitor {
 
     @Injected(\.permissionProvider) private var permissionProvider
     @Injected(\.clock) private var clock: any Clock<Duration>

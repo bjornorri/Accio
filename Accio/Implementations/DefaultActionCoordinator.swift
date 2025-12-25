@@ -9,7 +9,7 @@ import FactoryKit
 import Foundation
 
 /// Default implementation of ActionCoordinator that executes actions based on app state
-class DefaultActionCoordinator: ActionCoordinator {
+final class DefaultActionCoordinator: ActionCoordinator {
     @Injected(\.applicationManager) private var applicationManager: ApplicationManager
     @Injected(\.windowCycler) private var windowCycler: WindowCycler
 

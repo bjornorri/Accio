@@ -9,7 +9,7 @@ import AppKit
 import SwiftUI
 
 /// Manages the settings window lifecycle with dynamic dock/app switcher behavior
-class DefaultWindowManager: WindowManager {
+final class DefaultWindowManager: WindowManager {
     private var settingsWindow: SettingsWindow?
 
     init() {

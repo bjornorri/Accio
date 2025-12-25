@@ -8,7 +8,7 @@
 import CoreGraphics
 
 /// Posts keyboard events using CGEvent
-class CGEventKeyboardEventPoster: KeyboardEventPoster {
+final class CGEventKeyboardEventPoster: KeyboardEventPoster {
 
     enum KeyboardEventPosterError: Error {
         case failedToCreateEvent

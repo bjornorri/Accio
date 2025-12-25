@@ -1,34 +1,15 @@
 //
-//  SystemShortcutReader.swift
+//  DefaultSystemShortcutReader.swift
 //  Accio
 //
 //  Created by Bjorn Orri Saemundsson on 21.12.2025.
 //
 
-import Carbon
+import CoreGraphics
 import Foundation
 
-/// Represents a keyboard shortcut with key code and modifier flags
-struct KeyboardShortcut {
-    let keyCode: CGKeyCode
-    let modifiers: CGEventFlags
-
-    /// Default Cmd+` shortcut (backtick key)
-    static let commandBacktick = KeyboardShortcut(
-        keyCode: CGKeyCode(kVK_ANSI_Grave),
-        modifiers: .maskCommand
-    )
-}
-
-/// Reads system keyboard shortcuts from user preferences
-protocol SystemShortcutReader {
-    /// Read the user's configured "Move focus to next window" shortcut
-    /// - Returns: The configured shortcut, or Cmd+` as fallback
-    func readWindowCyclingShortcut() -> KeyboardShortcut
-}
-
 /// Default implementation that reads from symbolichotkeys.plist
-class DefaultSystemShortcutReader: SystemShortcutReader {
+final class DefaultSystemShortcutReader: SystemShortcutReader {
     /// Symbolic hotkey ID for "Move focus to next window"
     private static let windowCyclingHotkeyID = "27"
 
