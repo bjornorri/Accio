@@ -11,11 +11,11 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
-    private var bindingOrchestrator: BindingOrchestrator?
 
     // Inject dependencies via Factory
     @Injected(\.windowManager) private var windowManager: WindowManager
     @Injected(\.permissionProvider) private var permissionProvider: AccessibilityPermissionProvider
+    @Injected(\.bindingOrchestrator) private var bindingOrchestrator: BindingOrchestrator
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set initial activation policy to accessory (hidden from dock/switcher)
@@ -24,8 +24,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create menu bar item
         setupMenuBar()
 
-        // Initialize the binding orchestrator (manages all hotkey bindings)
-        bindingOrchestrator = BindingOrchestrator()
+        // Start the binding orchestrator (manages all hotkey bindings)
+        bindingOrchestrator.start()
 
         // Check accessibility permission and open settings if not granted
         if !permissionProvider.hasPermission {

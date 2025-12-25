@@ -1,5 +1,5 @@
 //
-//  BindingOrchestrator.swift
+//  DefaultBindingOrchestrator.swift
 //  Accio
 //
 
@@ -9,21 +9,21 @@ import FactoryKit
 import Foundation
 import KeyboardShortcuts
 
-/// Central coordinator that manages hotkey bindings and their execution
+/// Default implementation of BindingOrchestrator
 ///
-/// Responsibilities:
-/// - Observes hotkey bindings from Defaults
-/// - Registers/unregisters hotkeys with HotkeyManager as bindings change
-/// - Executes actions via ActionCoordinator when hotkeys are triggered
-final class BindingOrchestrator {
+/// Manages hotkey bindings by:
+/// - Observing hotkey bindings from Defaults
+/// - Registering/unregistering hotkeys with HotkeyManager as bindings change
+/// - Executing actions via ActionCoordinator when hotkeys are triggered
+final class DefaultBindingOrchestrator: BindingOrchestrator {
     @Injected(\.hotkeyManager) private var hotkeyManager: HotkeyManager
     @Injected(\.actionCoordinator) private var actionCoordinator: ActionCoordinator
 
     private var cancellables = Set<AnyCancellable>()
     private var registeredBindings: Set<String> = []
 
-    init() {
-        // Register all existing bindings on init
+    func start() {
+        // Register all existing bindings
         registerAllBindings()
 
         // Observe changes to bindings
@@ -34,9 +34,12 @@ final class BindingOrchestrator {
             .store(in: &cancellables)
     }
 
-    deinit {
+    func stop() {
+        cancellables.removeAll()
         unregisterAllBindings()
     }
+
+    // MARK: - Private Methods
 
     /// Register all current bindings from Defaults
     private func registerAllBindings() {
@@ -55,7 +58,7 @@ final class BindingOrchestrator {
     }
 
     /// Handle changes to the bindings array
-    private func handleBindingsChange(oldBindings: [HotkeyBinding], newBindings: [HotkeyBinding]) {
+    func handleBindingsChange(oldBindings: [HotkeyBinding], newBindings: [HotkeyBinding]) {
         let oldSet = Set(oldBindings.map(\.id))
         let newSet = Set(newBindings.map(\.id))
 

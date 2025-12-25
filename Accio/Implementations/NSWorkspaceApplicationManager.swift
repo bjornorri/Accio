@@ -48,7 +48,6 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
         }
     }
 
-    @MainActor
     func activate(bundleIdentifier: String) throws {
         // Open the app to bring it to front
         guard let appURL = workspace.urlForApplication(withBundleIdentifier: bundleIdentifier) else {
@@ -57,12 +56,10 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
         workspace.open(appURL)
     }
 
-    @MainActor
     func isRunning(bundleIdentifier: String) -> Bool {
         return workspace.runningApplications.contains { $0.bundleIdentifier == bundleIdentifier }
     }
 
-    @MainActor
     func isFocused(bundleIdentifier: String) -> Bool {
         guard let frontmostApp = workspace.frontmostApplication else {
             return false
@@ -70,7 +67,6 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
         return frontmostApp.bundleIdentifier == bundleIdentifier
     }
 
-    @MainActor
     func hide(bundleIdentifier: String) throws {
         // Find the running application
         guard let app = workspace.runningApplications.first(where: { $0.bundleIdentifier == bundleIdentifier }) else {

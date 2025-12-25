@@ -47,6 +47,13 @@ extension Container {
         self { DefaultActionCoordinator() }
     }
 
+    // MARK: - Binding Orchestrator
+
+    var bindingOrchestrator: Factory<BindingOrchestrator> {
+        self { DefaultBindingOrchestrator() }
+            .singleton
+    }
+
     // MARK: - Window Manager
 
     var windowManager: Factory<WindowManager> {
