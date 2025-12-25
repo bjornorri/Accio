@@ -14,68 +14,68 @@ extension Container {
     // MARK: - App Metadata Provider
 
     var appMetadataProvider: Factory<AppMetadataProvider> {
-        self { NSWorkspaceAppMetadataProvider() }
+        self { @MainActor in NSWorkspaceAppMetadataProvider() }
     }
 
     // MARK: - Application Manager
 
     var applicationManager: Factory<ApplicationManager> {
-        self { NSWorkspaceApplicationManager() }
+        self { @MainActor in NSWorkspaceApplicationManager() }
     }
 
     // MARK: - Hotkey Manager
 
     var hotkeyManager: Factory<HotkeyManager> {
-        self { KeyboardShortcutsHotkeyManager() }
+        self { @MainActor in  KeyboardShortcutsHotkeyManager() }
     }
 
     // MARK: - System Shortcut Reader
 
     var systemShortcutReader: Factory<SystemShortcutReader> {
-        self { DefaultSystemShortcutReader() }
+        self { @MainActor in  DefaultSystemShortcutReader() }
     }
 
     // MARK: - Keyboard Event Poster
 
     var keyboardEventPoster: Factory<KeyboardEventPoster> {
-        self { CGEventKeyboardEventPoster() }
+        self { @MainActor in  CGEventKeyboardEventPoster() }
     }
 
     // MARK: - Window Cycler
 
     var windowCycler: Factory<WindowCycler> {
-        self { SystemWindowCycler() }
+        self { @MainActor in  SystemWindowCycler() }
     }
 
     // MARK: - Action Coordinator
 
     var actionCoordinator: Factory<ActionCoordinator> {
-        self { DefaultActionCoordinator() }
+        self { @MainActor in  DefaultActionCoordinator() }
     }
 
     // MARK: - Binding Orchestrator
 
     var bindingOrchestrator: Factory<BindingOrchestrator> {
-        self { DefaultBindingOrchestrator() }
+        self { @MainActor in  DefaultBindingOrchestrator() }
             .singleton
     }
 
     // MARK: - Window Manager
 
     var windowManager: Factory<WindowManager> {
-        self { DefaultWindowManager() }
+        self { @MainActor in  DefaultWindowManager() }
             .singleton
     }
 
     // MARK: - Permission Manager
 
     var permissionProvider: Factory<AccessibilityPermissionProvider> {
-        self { DefaultAccessibilityPermissionProvider() }
+        self { @MainActor in  DefaultAccessibilityPermissionProvider() }
             .singleton
     }
 
     var permissionMonitor: Factory<AccessibilityPermissionMonitor> {
-        self { DefaultAccessibilityPermissionMonitor() }
+        self { @MainActor in  DefaultAccessibilityPermissionMonitor() }
             .singleton
     }
 
