@@ -110,6 +110,9 @@ struct BindingListView: View {
                 )
                 .tag(binding.id)
             }
+            .onMove { source, destination in
+                bindings.move(fromOffsets: source, toOffset: destination)
+            }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
