@@ -32,6 +32,7 @@ class SettingsWindow: NSWindow {
 
         // Make window key and order front on creation
         self.isReleasedWhenClosed = false // Keep window instance alive when closed
+        self.isRestorable = false // Disable window restoration
     }
 
     /// Override Cmd+Q to close window instead of quitting app
