@@ -14,7 +14,7 @@ import UniformTypeIdentifiers
 struct BindingListView: View {
     @Injected(\.appMetadataProvider) private var appMetadataProvider
     @Default(.hotkeyBindings) private var bindings
-    @State private var selection: HotkeyBinding.ID?
+    @State private var selection: Set<HotkeyBinding.ID> = []
     @State private var refreshTrigger = false
 
     var body: some View {
@@ -45,7 +45,7 @@ struct BindingListView: View {
                         .frame(width: 24, height: 24)
                 }
                 .buttonStyle(.borderless)
-                .disabled(selection == nil)
+                .disabled(selection.isEmpty)
 
                 Spacer()
             }
@@ -146,24 +146,24 @@ struct BindingListView: View {
                     appName: appName
                 )
                 bindings.append(newBinding)
-                selection = id
+                selection = [id]
             }
         }
     }
 
     private func removeSelected() {
-        guard let selectedId = selection,
-              let binding = bindings.first(where: { $0.id == selectedId }) else {
-            return
+        guard !selection.isEmpty else { return }
+
+        // Clear shortcuts and remove bindings for all selected items
+        for selectedId in selection {
+            if let binding = bindings.first(where: { $0.id == selectedId }) {
+                let name = KeyboardShortcuts.Name(binding.shortcutName)
+                KeyboardShortcuts.setShortcut(nil, for: name)
+            }
         }
 
-        // Clear the shortcut
-        let name = KeyboardShortcuts.Name(binding.shortcutName)
-        KeyboardShortcuts.setShortcut(nil, for: name)
-
-        // Remove binding
-        bindings.removeAll { $0.id == selectedId }
-        selection = nil
+        bindings.removeAll { selection.contains($0.id) }
+        selection = []
     }
 }
 
