@@ -90,10 +90,14 @@ struct BindingListView: View {
         }
     }
 
+    private var sortedBindings: [HotkeyBinding] {
+        bindings.sorted { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+    }
+
     private var bindingsList: some View {
         ScrollViewReader { proxy in
             List(selection: $selection) {
-                ForEach(bindings) { binding in
+                ForEach(sortedBindings) { binding in
                     BindingRowView(
                         binding: binding,
                         appMetadataProvider: appMetadataProvider,
@@ -102,9 +106,6 @@ struct BindingListView: View {
                     )
                     .tag(binding.id)
                     .id(binding.id)
-                }
-                .onMove { source, destination in
-                    bindings.move(fromOffsets: source, toOffset: destination)
                 }
             }
             .listStyle(.inset)
@@ -154,7 +155,7 @@ struct BindingListView: View {
                     appBundleIdentifier: bundleIdentifier,
                     appName: appName
                 )
-                bindings.insert(newBinding, at: 0)
+                bindings.append(newBinding)
                 selection = [id]
                 newlyAddedBindingID = id
             }
