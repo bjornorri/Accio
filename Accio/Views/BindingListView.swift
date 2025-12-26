@@ -15,6 +15,7 @@ struct BindingListView: View {
     @Injected(\.appMetadataProvider) private var appMetadataProvider
     @Default(.hotkeyBindings) private var bindings
     @State private var selection: Set<HotkeyBinding.ID> = []
+    @State private var searchText = ""
     @State private var refreshTrigger = false
     @State private var newlyAddedBindingID: HotkeyBinding.ID?
 
@@ -90,14 +91,18 @@ struct BindingListView: View {
         }
     }
 
-    private var sortedBindings: [HotkeyBinding] {
-        bindings.sorted { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+    private var filteredBindings: [HotkeyBinding] {
+        let sorted = bindings.sorted { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+        if searchText.isEmpty {
+            return sorted
+        }
+        return sorted.filter { $0.appName.localizedCaseInsensitiveContains(searchText) }
     }
 
     private var bindingsList: some View {
         ScrollViewReader { proxy in
             List(selection: $selection) {
-                ForEach(sortedBindings) { binding in
+                ForEach(filteredBindings) { binding in
                     BindingRowView(
                         binding: binding,
                         appMetadataProvider: appMetadataProvider,
@@ -111,6 +116,7 @@ struct BindingListView: View {
             .listStyle(.inset)
             .alternatingRowBackgrounds()
             .environment(\.defaultMinListRowHeight, 40)
+            .searchable(text: $searchText, placement: .toolbar)
             .onChange(of: newlyAddedBindingID) { _, newID in
                 if let id = newID {
                     withAnimation {
