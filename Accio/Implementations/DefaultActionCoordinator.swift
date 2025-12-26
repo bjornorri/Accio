@@ -12,6 +12,8 @@ import Foundation
 final class DefaultActionCoordinator: ActionCoordinator {
     @Injected(\.applicationManager) private var applicationManager: ApplicationManager
     @Injected(\.windowCycler) private var windowCycler: WindowCycler
+    @Injected(\.appMetadataProvider) private var appMetadataProvider: AppMetadataProvider
+    @Injected(\.notificationPoster) private var notificationPoster: NotificationPoster
 
     func executeAction(for bundleIdentifier: String, settings: AppBehaviorSettings) async {
         let isRunning = applicationManager.isRunning(bundleIdentifier: bundleIdentifier)
@@ -20,6 +22,10 @@ final class DefaultActionCoordinator: ActionCoordinator {
             // App is not running - apply whenNotRunning action
             switch settings.whenNotRunning {
             case .launchApp:
+                let appName = appMetadataProvider.appName(for: bundleIdentifier) ?? bundleIdentifier
+                let icon = appMetadataProvider.appIcon(for: bundleIdentifier)
+                notificationPoster.postAppLaunchingNotification(appName: appName, icon: icon)
+
                 do {
                     try await applicationManager.launch(bundleIdentifier: bundleIdentifier)
                 } catch {

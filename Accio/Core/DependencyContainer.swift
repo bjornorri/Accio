@@ -53,6 +53,13 @@ extension Container {
         self { @MainActor in  DefaultActionCoordinator() }
     }
 
+    // MARK: - Notification Poster
+
+    var notificationPoster: Factory<NotificationPoster> {
+        self { @MainActor in UserNotificationPoster() }
+            .singleton
+    }
+
     // MARK: - Binding Orchestrator
 
     var bindingOrchestrator: Factory<BindingOrchestrator> {
