@@ -27,35 +27,13 @@ struct BindingListView: View {
                 emptyStateView
             } else {
                 bindingsList
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        listToolbar
+                    }
             }
         }
         .frame(maxWidth: 800)
         .frame(maxWidth: .infinity)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            HStack(spacing: 8) {
-                Button {
-                    addBinding()
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .buttonStyle(.borderless)
-
-                Button {
-                    removeSelected()
-                } label: {
-                    Image(systemName: "minus")
-                }
-                .buttonStyle(.borderless)
-                .disabled(selection.isEmpty)
-
-                Spacer()
-            }
-            .frame(maxWidth: 800)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .background(.bar)
-        }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
             // Update cached app metadata for installed apps, then trigger refresh
             updateAppMetadata()
@@ -115,8 +93,39 @@ struct BindingListView: View {
         ContentUnavailableView {
             Label("No Shortcuts", systemImage: "keyboard")
         } description: {
-            Text("Press \(Image(systemName: "command"))N or click + to add an application shortcut")
+            Text("Press \(Image(systemName: "command"))N to add an application shortcut")
+        } actions: {
+            Button("Add Shortcut") {
+                addBinding()
+            }
+            .buttonStyle(.borderedProminent)
         }
+    }
+
+    private var listToolbar: some View {
+        HStack(spacing: 8) {
+            Button {
+                addBinding()
+            } label: {
+                Image(systemName: "plus")
+            }
+            .buttonStyle(.borderless)
+
+            Button {
+                removeSelected()
+            } label: {
+                Image(systemName: "minus")
+            }
+            .buttonStyle(.borderless)
+            .disabled(selection.isEmpty)
+
+            Spacer()
+        }
+        .frame(maxWidth: 800)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .background(.bar)
     }
 
     private var filteredBindings: [HotkeyBinding] {
