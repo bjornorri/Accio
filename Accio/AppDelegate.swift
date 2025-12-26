@@ -14,7 +14,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Inject dependencies via Factory
     @Injected(\.windowManager) private var windowManager: WindowManager
-    @Injected(\.permissionProvider) private var permissionProvider: AccessibilityPermissionProvider
     @Injected(\.bindingOrchestrator) private var bindingOrchestrator: BindingOrchestrator
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -26,11 +25,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Start the binding orchestrator (manages all hotkey bindings)
         bindingOrchestrator.start()
-
-        // Check accessibility permission and open settings if not granted
-        if !permissionProvider.hasPermission {
-            openSettings()
-        }
 
         #if DEBUG
         // Always open settings window on launch in debug builds

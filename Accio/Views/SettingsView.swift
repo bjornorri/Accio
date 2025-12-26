@@ -115,11 +115,11 @@ struct GeneralSettingsView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 6) {
-                            Image(systemName: hasPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(hasPermission ? .green : .red)
+                            Image(systemName: hasPermission ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                                .foregroundStyle(hasPermission ? .green : .yellow)
                             Text("Accessibility Access")
                         }
-                        Text("Required for global hotkeys and app control")
+                        Text("Enables window cycling within apps")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
