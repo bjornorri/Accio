@@ -141,19 +141,19 @@ struct GeneralSettingsView: View {
                 .toggleStyle(.checkbox)
                 .id(launchAtLoginRefreshTrigger)
 
-                Picker("When app is not running", selection: $behaviorSettings.whenNotRunning) {
+                Picker("Target app not running", selection: $behaviorSettings.whenNotRunning) {
                     ForEach(NotRunningAction.allCases, id: \.self) { action in
                         Text(action.displayName).tag(action)
                     }
                 }
 
-                Picker("When app is not focused", selection: $behaviorSettings.whenNotFocused) {
+                Picker("Target app in background", selection: $behaviorSettings.whenNotFocused) {
                     ForEach(NotFocusedAction.allCases, id: \.self) { action in
                         Text(action.displayName).tag(action)
                     }
                 }
 
-                Picker("When app is focused", selection: $behaviorSettings.whenFocused) {
+                Picker("Target app focused", selection: $behaviorSettings.whenFocused) {
                     ForEach(FocusedAction.allCases, id: \.self) { action in
                         Text(action.displayName).tag(action)
                     }
