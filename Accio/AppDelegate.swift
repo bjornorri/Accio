@@ -63,5 +63,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func quit() {
         NSApplication.shared.terminate(nil)
     }
+
+    // Called when user tries to launch the app again while it's already running
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        openSettings()
+        return false
+    }
 }
 
