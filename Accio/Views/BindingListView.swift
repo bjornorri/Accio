@@ -19,72 +19,35 @@ struct BindingListView: View {
     @State private var newlyAddedBindingID: HotkeyBinding.ID?
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Column headers
-            HStack(spacing: 12) {
-                Text("Application")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 8)
-
-                Text("Shortcut")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(width: 140, alignment: .trailing)
-                    .padding(.trailing, 8)
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
-            .background(Color(nsColor: .windowBackgroundColor).opacity(0.5))
-
-            Divider()
-
+        Group {
             if bindings.isEmpty {
                 emptyStateView
             } else {
                 bindingsList
             }
-
-            Divider()
-
-            // +/- toolbar at bottom
-            HStack(spacing: 0) {
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            HStack(spacing: 8) {
                 Button {
                     addBinding()
                 } label: {
                     Image(systemName: "plus")
-                        .fontWeight(.medium)
-                        .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.borderless)
-
-                Divider()
-                    .frame(height: 16)
 
                 Button {
                     removeSelected()
                 } label: {
                     Image(systemName: "minus")
-                        .fontWeight(.medium)
-                        .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.borderless)
                 .disabled(selection.isEmpty)
 
                 Spacer()
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(Color(nsColor: .windowBackgroundColor))
+            .padding(12)
+            .background(.bar)
         }
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-        )
-        .padding()
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
             // Update cached app metadata for installed apps, then trigger refresh
             updateAppMetadata()
@@ -115,14 +78,11 @@ struct BindingListView: View {
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: 8) {
-            Text("No Shortcuts")
-                .foregroundColor(.secondary)
-            Text("Click + to add an application")
-                .font(.caption)
-                .foregroundColor(.secondary)
+        ContentUnavailableView {
+            Label("No Shortcuts", systemImage: "keyboard")
+        } description: {
+            Text("Click + to add an application shortcut")
         }
-        .frame(maxWidth: .infinity, minHeight: 150)
     }
 
     private var bindingsList: some View {
@@ -142,8 +102,8 @@ struct BindingListView: View {
                     bindings.move(fromOffsets: source, toOffset: destination)
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
+            .listStyle(.inset)
+            .alternatingRowBackgrounds()
             .onChange(of: newlyAddedBindingID) { _, newID in
                 if let id = newID {
                     withAnimation {
@@ -242,19 +202,22 @@ struct BindingRowView: View {
                     .frame(width: 32, height: 32)
             } else {
                 Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.title)
                     .frame(width: 32, height: 32)
-                    .foregroundColor(.yellow)
+                    .foregroundStyle(.yellow)
             }
 
             // App name (use cached name from binding)
-            Text(binding.appName)
-                .lineLimit(1)
-                .foregroundColor(isAppInstalled ? .primary : .secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(binding.appName)
+                    .lineLimit(1)
+                    .foregroundStyle(isAppInstalled ? .primary : .secondary)
 
-            if !isAppInstalled {
-                Text("(Not Installed)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                if !isAppInstalled {
+                    Text("Not Installed")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Spacer()
@@ -262,7 +225,7 @@ struct BindingRowView: View {
             // Shortcut recorder
             FocusableRecorder(name: shortcutName, shouldFocus: shouldFocus)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
     }
 }
 

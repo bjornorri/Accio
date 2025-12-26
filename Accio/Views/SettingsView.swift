@@ -114,156 +114,68 @@ struct GeneralSettingsView: View {
     @Default(.appBehaviorSettings) private var behaviorSettings
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Accessibility Permission Section
-                GroupBox(label: Text("Permissions").font(.headline)) {
-                    HStack(alignment: .center, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 6) {
-                                Image(systemName: hasPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                    .foregroundColor(hasPermission ? .green : .red)
-
-                                Text("Accessibility Access")
-                            }
-
-                            Text("Required for global hotkeys and app control")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(2)
-                                .fixedSize(horizontal: false, vertical: true)
+        Form {
+            Section("Permissions") {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: hasPermission ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundStyle(hasPermission ? .green : .red)
+                            Text("Accessibility Access")
                         }
-
-                        Spacer()
-
-                        Button("Grant Permission") {
-                            permissionMonitor.requestPermission()
-                        }
-                        .opacity(hasPermission ? 0 : 1)
-                        .disabled(hasPermission)
+                        Text("Required for global hotkeys and app control")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 12)
-                }
 
-                // Behavior Settings Section
-                GroupBox(label: Text("Behavior").font(.headline)) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Launch at login
-                        VStack(alignment: .leading, spacing: 4) {
-                            LaunchAtLogin.Toggle {
-                                Text("Launch at login")
-                            }
-                            .toggleStyle(.checkbox)
-                            .id(launchAtLoginRefreshTrigger)
+                    Spacer()
 
-                            Text("Automatically start Accio when you log in")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.vertical, 12)
-
-                        Divider()
-
-                        // Show notifications
-                        VStack(alignment: .leading, spacing: 4) {
-                            Toggle("Show notifications", isOn: $behaviorSettings.showNotificationWhenLaunching)
-                                .toggleStyle(.checkbox)
-
-                            Text("Display a notification when launching apps")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.vertical, 12)
-
-                        Divider()
-
-                        // When app is not running
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("When app is not running")
-                                Text("Action to take when the target app is not running")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-
-                            Spacer()
-
-                            Picker("", selection: $behaviorSettings.whenNotRunning) {
-                                ForEach(NotRunningAction.allCases, id: \.self) { action in
-                                    Text(action.displayName).tag(action)
-                                }
-                            }
-                            .labelsHidden()
-                            .pickerStyle(.menu)
-                            .frame(width: 150)
-                            .fixedSize()
-                        }
-                        .padding(.vertical, 12)
-
-                        Divider()
-
-                        // When app is running but not focused
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("When app is not focused")
-                                Text("Action to take when the target app is running but not focused")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-
-                            Spacer()
-
-                            Picker("", selection: $behaviorSettings.whenNotFocused) {
-                                ForEach(NotFocusedAction.allCases, id: \.self) { action in
-                                    Text(action.displayName).tag(action)
-                                }
-                            }
-                            .labelsHidden()
-                            .pickerStyle(.menu)
-                            .frame(width: 150)
-                            .fixedSize()
-                        }
-                        .padding(.vertical, 12)
-
-                        Divider()
-
-                        // When app is already focused
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("When app is focused")
-                                Text("Action to take when the target app is already focused")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-
-                            Spacer()
-
-                            Picker("", selection: $behaviorSettings.whenFocused) {
-                                ForEach(FocusedAction.allCases, id: \.self) { action in
-                                    Text(action.displayName).tag(action)
-                                }
-                            }
-                            .labelsHidden()
-                            .pickerStyle(.menu)
-                            .frame(width: 150)
-                            .fixedSize()
-                        }
-                        .padding(.vertical, 12)
+                    Button("Grant Permission") {
+                        permissionMonitor.requestPermission()
                     }
-                    .padding(.horizontal, 8)
+                    .opacity(hasPermission ? 0 : 1)
+                    .disabled(hasPermission)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            .padding(.bottom, 32)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+
+            Section("Startup") {
+                LaunchAtLogin.Toggle {
+                    Text("Launch at login")
+                }
+                .toggleStyle(.checkbox)
+                .id(launchAtLoginRefreshTrigger)
+            }
+
+            Section("Notifications") {
+                Toggle("Show notifications when launching apps", isOn: $behaviorSettings.showNotificationWhenLaunching)
+                    .toggleStyle(.checkbox)
+            }
+
+            Section {
+                Picker("When app is not running", selection: $behaviorSettings.whenNotRunning) {
+                    ForEach(NotRunningAction.allCases, id: \.self) { action in
+                        Text(action.displayName).tag(action)
+                    }
+                }
+
+                Picker("When app is not focused", selection: $behaviorSettings.whenNotFocused) {
+                    ForEach(NotFocusedAction.allCases, id: \.self) { action in
+                        Text(action.displayName).tag(action)
+                    }
+                }
+
+                Picker("When app is focused", selection: $behaviorSettings.whenFocused) {
+                    ForEach(FocusedAction.allCases, id: \.self) { action in
+                        Text(action.displayName).tag(action)
+                    }
+                }
+            } header: {
+                Text("Behavior")
+            } footer: {
+                Text("Choose what happens when you trigger a shortcut")
+            }
         }
+        .formStyle(.grouped)
         .onAppear {
             // Register callback and check permission
             permissionMonitor.onPermissionChange { newValue in
