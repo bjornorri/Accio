@@ -46,6 +46,52 @@ struct BindingListView: View {
             keyboardHandler?.stop()
             keyboardHandler = nil
         }
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            handleDrop(providers: providers)
+            return true
+        }
+    }
+
+    private func handleDrop(providers: [NSItemProvider]) {
+        for provider in providers {
+            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
+                guard let data = item as? Data,
+                      let url = URL(dataRepresentation: data, relativeTo: nil),
+                      url.pathExtension == "app" else {
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    addBindingForApp(at: url)
+                }
+            }
+        }
+    }
+
+    private func addBindingForApp(at url: URL) {
+        guard let bundle = Bundle(url: url),
+              let bundleIdentifier = bundle.bundleIdentifier else {
+            return
+        }
+
+        // Skip if app is already in the list
+        guard !bindings.contains(where: { $0.appBundleIdentifier == bundleIdentifier }) else {
+            return
+        }
+
+        let appName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+            ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String
+            ?? url.deletingPathExtension().lastPathComponent
+
+        let id = UUID()
+        let newBinding = HotkeyBinding(
+            id: id,
+            shortcutName: "binding-\(id.uuidString)",
+            appBundleIdentifier: bundleIdentifier,
+            appName: appName
+        )
+        bindings.append(newBinding)
+        selection = [id]
     }
 
     private func setupKeyboardHandler() {
@@ -93,13 +139,14 @@ struct BindingListView: View {
         ContentUnavailableView {
             Label("No Shortcuts", systemImage: "keyboard")
         } description: {
-            Text("Press \(Image(systemName: "command"))N to add an application shortcut")
+            Text("Press \(Image(systemName: "command"))N to add an application shortcut\nor drag apps here")
         } actions: {
             Button("Add Shortcut") {
                 addBinding()
             }
             .buttonStyle(.borderedProminent)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var listToolbar: some View {
@@ -170,20 +217,26 @@ struct BindingListView: View {
 
     private func addBinding() {
         let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
+        panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
         panel.allowedContentTypes = [.application]
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        panel.message = "Choose an application"
+        panel.message = "Choose applications"
         panel.prompt = "Add"
 
-        if panel.runModal() == .OK, let url = panel.url {
-            if let bundle = Bundle(url: url),
-               let bundleIdentifier = bundle.bundleIdentifier {
-                // Check if app is already in the list
+        if panel.runModal() == .OK {
+            var addedIDs: [HotkeyBinding.ID] = []
+
+            for url in panel.urls {
+                guard let bundle = Bundle(url: url),
+                      let bundleIdentifier = bundle.bundleIdentifier else {
+                    continue
+                }
+
+                // Skip if app is already in the list
                 guard !bindings.contains(where: { $0.appBundleIdentifier == bundleIdentifier }) else {
-                    return
+                    continue
                 }
 
                 // Capture app name at creation time
@@ -199,8 +252,15 @@ struct BindingListView: View {
                     appName: appName
                 )
                 bindings.append(newBinding)
-                selection = [id]
-                newlyAddedBindingID = id
+                addedIDs.append(id)
+            }
+
+            if let firstID = addedIDs.first {
+                selection = [firstID]
+                // Only auto-focus recorder when adding a single app
+                if addedIDs.count == 1 {
+                    newlyAddedBindingID = firstID
+                }
             }
         }
     }
