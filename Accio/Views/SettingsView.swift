@@ -12,40 +12,36 @@ import SwiftUI
 
 /// Main settings view with tabs for General and Shortcuts settings
 struct SettingsView: View {
-    fileprivate enum Tab: CaseIterable {
+    fileprivate enum SettingsTab: CaseIterable {
         case general
         case shortcuts
     }
 
-    @State private var selectedTab: Tab = .general
+    @State private var selectedTab: SettingsTab = .general
 
-    fileprivate static let allTabs = Tab.allCases
+    fileprivate static let allTabs = SettingsTab.allCases
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            GeneralSettingsView()
-                .tabItem {
-                    Label("General", systemImage: "gear")
-                }
-                .tag(Tab.general)
-
-            BindingListView()
-                .tabItem {
-                    Label("Shortcuts", systemImage: "keyboard")
-                }
-                .tag(Tab.shortcuts)
+            Tab("General", systemImage: "gear", value: .general) {
+                GeneralSettingsView()
+            }
+            Tab("Shortcuts", systemImage: "keyboard", value: .shortcuts) {
+                BindingListView()
+            }
         }
-        .frame(minWidth: 500, minHeight: 450)
+        .tabViewStyle(.sidebarAdaptable)
+        .frame(minWidth: 600, minHeight: 500)
         .modifier(TabNavigationShortcutsModifier(selectedTab: $selectedTab))
     }
 }
 
 /// Modifier that adds Cmd+1/2/... and Cmd+Shift+{/} keyboard shortcuts for tab navigation
 private struct TabNavigationShortcutsModifier: ViewModifier {
-    @Binding var selectedTab: SettingsView.Tab
+    @Binding var selectedTab: SettingsView.SettingsTab
     @State private var monitor: Any?
 
-    private var tabs: [SettingsView.Tab] { SettingsView.allTabs }
+    private var tabs: [SettingsView.SettingsTab] { SettingsView.allTabs }
 
     func body(content: Content) -> some View {
         content

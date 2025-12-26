@@ -13,13 +13,16 @@ class SettingsWindow: NSWindow {
     init() {
         super.init(
             contentRect: .zero,
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
 
-        // Configure window
+        // Configure window with unified toolbar for sidebar integration
         self.title = "Accio Settings"
+        self.titlebarAppearsTransparent = false
+        self.titleVisibility = .visible
+        self.toolbarStyle = .automatic
 
         // Host SwiftUI view
         let settingsView = SettingsView()
@@ -27,7 +30,7 @@ class SettingsWindow: NSWindow {
         self.contentViewController = hostingController
 
         // Set content size (this sizes the content area, excluding title bar)
-        self.setContentSize(NSSize(width: 600, height: 450))
+        self.setContentSize(NSSize(width: 600, height: 500))
         self.center() // Center on screen
 
         // Make window key and order front on creation
