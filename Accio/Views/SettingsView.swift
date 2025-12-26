@@ -134,15 +134,13 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            Section("Startup") {
+            Section {
                 LaunchAtLogin.Toggle {
                     Text("Launch at login")
                 }
                 .toggleStyle(.checkbox)
                 .id(launchAtLoginRefreshTrigger)
-            }
 
-            Section {
                 Picker("When app is not running", selection: $behaviorSettings.whenNotRunning) {
                     ForEach(NotRunningAction.allCases, id: \.self) { action in
                         Text(action.displayName).tag(action)
