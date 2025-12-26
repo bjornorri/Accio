@@ -18,6 +18,8 @@ struct BindingListView: View {
     @State private var searchText = ""
     @State private var refreshTrigger = false
     @State private var newlyAddedBindingID: HotkeyBinding.ID?
+    @State private var focusedBindingID: HotkeyBinding.ID?
+    @State private var keyboardHandler: BindingListKeyboardHandler?
 
     var body: some View {
         Group {
@@ -59,6 +61,32 @@ struct BindingListView: View {
             updateAppMetadata()
             refreshTrigger.toggle()
         }
+        .onAppear {
+            setupKeyboardHandler()
+        }
+        .onDisappear {
+            keyboardHandler?.stop()
+            keyboardHandler = nil
+        }
+    }
+
+    private func setupKeyboardHandler() {
+        let handler = BindingListKeyboardHandler(
+            hasSelection: { !selection.isEmpty },
+            hasSingleSelection: { selection.count == 1 },
+            onAddItem: { addBinding() },
+            onRemoveSelected: { removeSelected() },
+            onFocusSelected: {
+                if let selectedID = selection.first {
+                    focusedBindingID = selectedID
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        focusedBindingID = nil
+                    }
+                }
+            }
+        )
+        handler.start()
+        keyboardHandler = handler
     }
 
     private func updateAppMetadata() {
@@ -87,7 +115,7 @@ struct BindingListView: View {
         ContentUnavailableView {
             Label("No Shortcuts", systemImage: "keyboard")
         } description: {
-            Text("Click + to add an application shortcut")
+            Text("Press \(Image(systemName: "command"))N or click + to add an application shortcut")
         }
     }
 
@@ -107,7 +135,7 @@ struct BindingListView: View {
                         binding: binding,
                         appMetadataProvider: appMetadataProvider,
                         refreshTrigger: refreshTrigger,
-                        shouldFocus: binding.id == newlyAddedBindingID
+                        shouldFocus: binding.id == newlyAddedBindingID || binding.id == focusedBindingID
                     )
                     .tag(binding.id)
                     .id(binding.id)
