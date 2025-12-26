@@ -142,11 +142,6 @@ struct GeneralSettingsView: View {
                 .id(launchAtLoginRefreshTrigger)
             }
 
-            Section("Notifications") {
-                Toggle("Show notifications when launching apps", isOn: $behaviorSettings.showNotificationWhenLaunching)
-                    .toggleStyle(.checkbox)
-            }
-
             Section {
                 Picker("When app is not running", selection: $behaviorSettings.whenNotRunning) {
                     ForEach(NotRunningAction.allCases, id: \.self) { action in

@@ -39,9 +39,7 @@ struct DefaultActionCoordinatorTests {
         let settings = AppBehaviorSettings(
             whenNotRunning: .launchApp,
             whenNotFocused: .focusApp,
-            whenFocused: .cycleWindows,
-            showNotificationWhenLaunching: false
-        )
+            whenFocused: .cycleWindows        )
 
         await coordinator.executeAction(for: "com.apple.Safari", settings: settings)
 
@@ -57,9 +55,7 @@ struct DefaultActionCoordinatorTests {
         let settings = AppBehaviorSettings(
             whenNotRunning: .doNothing,
             whenNotFocused: .focusApp,
-            whenFocused: .cycleWindows,
-            showNotificationWhenLaunching: false
-        )
+            whenFocused: .cycleWindows        )
 
         await coordinator.executeAction(for: "com.apple.Safari", settings: settings)
 
@@ -78,9 +74,7 @@ struct DefaultActionCoordinatorTests {
         let settings = AppBehaviorSettings(
             whenNotRunning: .launchApp,
             whenNotFocused: .focusApp,
-            whenFocused: .cycleWindows,
-            showNotificationWhenLaunching: false
-        )
+            whenFocused: .cycleWindows        )
 
         await coordinator.executeAction(for: "com.apple.Safari", settings: settings)
 
@@ -96,9 +90,7 @@ struct DefaultActionCoordinatorTests {
         let settings = AppBehaviorSettings(
             whenNotRunning: .launchApp,
             whenNotFocused: .doNothing,
-            whenFocused: .cycleWindows,
-            showNotificationWhenLaunching: false
-        )
+            whenFocused: .cycleWindows        )
 
         await coordinator.executeAction(for: "com.apple.Safari", settings: settings)
 
@@ -117,9 +109,7 @@ struct DefaultActionCoordinatorTests {
         let settings = AppBehaviorSettings(
             whenNotRunning: .launchApp,
             whenNotFocused: .focusApp,
-            whenFocused: .cycleWindows,
-            showNotificationWhenLaunching: false
-        )
+            whenFocused: .cycleWindows        )
 
         await coordinator.executeAction(for: "com.apple.Safari", settings: settings)
 
@@ -136,9 +126,7 @@ struct DefaultActionCoordinatorTests {
         let settings = AppBehaviorSettings(
             whenNotRunning: .launchApp,
             whenNotFocused: .focusApp,
-            whenFocused: .hideApp,
-            showNotificationWhenLaunching: false
-        )
+            whenFocused: .hideApp        )
 
         await coordinator.executeAction(for: "com.apple.Safari", settings: settings)
 
@@ -155,9 +143,7 @@ struct DefaultActionCoordinatorTests {
         let settings = AppBehaviorSettings(
             whenNotRunning: .launchApp,
             whenNotFocused: .focusApp,
-            whenFocused: .doNothing,
-            showNotificationWhenLaunching: false
-        )
+            whenFocused: .doNothing        )
 
         await coordinator.executeAction(for: "com.apple.Safari", settings: settings)
 

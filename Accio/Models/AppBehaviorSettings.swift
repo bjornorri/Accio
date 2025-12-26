@@ -58,13 +58,11 @@ struct AppBehaviorSettings: Codable, Defaults.Serializable {
     var whenNotRunning: NotRunningAction
     var whenNotFocused: NotFocusedAction
     var whenFocused: FocusedAction
-    var showNotificationWhenLaunching: Bool
 
     /// Default settings matching the most common use case
     static let `default` = AppBehaviorSettings(
         whenNotRunning: .launchApp,
         whenNotFocused: .focusApp,
-        whenFocused: .cycleWindows,
-        showNotificationWhenLaunching: true
+        whenFocused: .cycleWindows
     )
 }
