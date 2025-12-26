@@ -29,8 +29,9 @@ class SettingsWindow: NSWindow {
         let hostingController = NSHostingController(rootView: settingsView)
         self.contentViewController = hostingController
 
-        // Set content size (this sizes the content area, excluding title bar)
+        // Set content size and constraints
         self.setContentSize(NSSize(width: 600, height: 500))
+        self.contentMinSize = NSSize(width: 600, height: 500)
         self.center() // Center on screen
 
         // Make window key and order front on creation

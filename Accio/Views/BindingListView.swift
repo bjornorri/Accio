@@ -26,6 +26,8 @@ struct BindingListView: View {
                 bindingsList
             }
         }
+        .frame(maxWidth: 800)
+        .frame(maxWidth: .infinity)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             HStack(spacing: 8) {
                 Button {
@@ -45,7 +47,10 @@ struct BindingListView: View {
 
                 Spacer()
             }
-            .padding(12)
+            .frame(maxWidth: 800)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .center)
             .background(.bar)
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
@@ -104,6 +109,7 @@ struct BindingListView: View {
             }
             .listStyle(.inset)
             .alternatingRowBackgrounds()
+            .environment(\.defaultMinListRowHeight, 40)
             .onChange(of: newlyAddedBindingID) { _, newID in
                 if let id = newID {
                     withAnimation {
