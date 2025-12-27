@@ -15,6 +15,7 @@ final class WindowFocusObserver {
     private var becomeKeyObserver: NSObjectProtocol?
     private weak var lastFirstResponder: NSResponder?
     private weak var savedFirstResponder: NSResponder?
+    private weak var savedWindow: NSWindow?
 
     func start() {
         // Track the current first responder continuously
@@ -37,8 +38,9 @@ final class WindowFocusObserver {
             forName: NSWindow.didResignKeyNotification,
             object: nil,
             queue: .main
-        ) { [weak self] _ in
+        ) { [weak self] notification in
             self?.savedFirstResponder = self?.lastFirstResponder
+            self?.savedWindow = notification.object as? NSWindow
         }
 
         // Restore the saved first responder when window becomes key
@@ -49,6 +51,7 @@ final class WindowFocusObserver {
         ) { [weak self] notification in
             guard let self,
                   let window = notification.object as? NSWindow,
+                  window === self.savedWindow,
                   let responder = self.savedFirstResponder else {
                 return
             }
