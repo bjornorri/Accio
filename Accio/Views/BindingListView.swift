@@ -17,8 +17,6 @@ struct BindingListView: View {
     @State private var selection: Set<HotkeyBinding.ID> = []
     @State private var searchText = ""
     @State private var refreshTrigger = false
-    @State private var newlyAddedBindingID: HotkeyBinding.ID?
-    @State private var focusedBindingID: HotkeyBinding.ID?
     @State private var keyboardHandler: BindingListKeyboardHandler?
 
     var body: some View {
@@ -97,17 +95,8 @@ struct BindingListView: View {
     private func setupKeyboardHandler() {
         let handler = BindingListKeyboardHandler(
             hasSelection: { !selection.isEmpty },
-            hasSingleSelection: { selection.count == 1 },
             onAddItem: { addBinding() },
-            onRemoveSelected: { removeSelected() },
-            onFocusSelected: {
-                if let selectedID = selection.first {
-                    focusedBindingID = selectedID
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        focusedBindingID = nil
-                    }
-                }
-            }
+            onRemoveSelected: { removeSelected() }
         )
         handler.start()
         keyboardHandler = handler
@@ -190,8 +179,7 @@ struct BindingListView: View {
                     BindingRowView(
                         binding: binding,
                         appMetadataProvider: appMetadataProvider,
-                        refreshTrigger: refreshTrigger,
-                        shouldFocus: binding.id == newlyAddedBindingID || binding.id == focusedBindingID
+                        refreshTrigger: refreshTrigger
                     )
                     .tag(binding.id)
                     .id(binding.id)
@@ -201,17 +189,6 @@ struct BindingListView: View {
             .alternatingRowBackgrounds()
             .environment(\.defaultMinListRowHeight, 40)
             .searchable(text: $searchText, placement: .toolbar)
-            .onChange(of: newlyAddedBindingID) { _, newID in
-                if let id = newID {
-                    withAnimation {
-                        proxy.scrollTo(id, anchor: .top)
-                    }
-                    // Clear the flag after a short delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        newlyAddedBindingID = nil
-                    }
-                }
-            }
         }
     }
 
@@ -257,10 +234,6 @@ struct BindingListView: View {
 
             if let firstID = addedIDs.first {
                 selection = [firstID]
-                // Only auto-focus recorder when adding a single app
-                if addedIDs.count == 1 {
-                    newlyAddedBindingID = firstID
-                }
             }
         }
     }
@@ -286,7 +259,6 @@ struct BindingRowView: View {
     let binding: HotkeyBinding
     let appMetadataProvider: AppMetadataProvider
     let refreshTrigger: Bool
-    let shouldFocus: Bool
 
     private var isAppInstalled: Bool {
         // refreshTrigger ensures this is re-evaluated when window becomes active
@@ -333,28 +305,9 @@ struct BindingRowView: View {
             Spacer()
 
             // Shortcut recorder
-            FocusableRecorder(name: shortcutName, shouldFocus: shouldFocus)
-                .focusable(false)
+            KeyboardShortcuts.Recorder(for: shortcutName)
         }
         .padding(.vertical, 4)
-    }
-}
-
-/// A keyboard shortcut recorder that can be focused programmatically
-struct FocusableRecorder: NSViewRepresentable {
-    let name: KeyboardShortcuts.Name
-    let shouldFocus: Bool
-
-    func makeNSView(context: Context) -> KeyboardShortcuts.RecorderCocoa {
-        KeyboardShortcuts.RecorderCocoa(for: name)
-    }
-
-    func updateNSView(_ recorder: KeyboardShortcuts.RecorderCocoa, context: Context) {
-        if shouldFocus {
-            DispatchQueue.main.async {
-                recorder.window?.makeFirstResponder(recorder)
-            }
-        }
     }
 }
 
