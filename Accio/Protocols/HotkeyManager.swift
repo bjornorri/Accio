@@ -21,4 +21,10 @@ protocol HotkeyManager {
 
     /// Unregister all hotkeys
     func unregisterAll()
+
+    /// Pause all hotkeys temporarily (e.g., during shortcut recording)
+    func pauseAll()
+
+    /// Resume all hotkeys after pausing
+    func resumeAll()
 }

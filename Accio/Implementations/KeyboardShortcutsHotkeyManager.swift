@@ -34,4 +34,12 @@ final class KeyboardShortcutsHotkeyManager: HotkeyManager {
         // Remove all handlers from the KeyboardShortcuts library
         KeyboardShortcuts.removeAllHandlers()
     }
+
+    func pauseAll() {
+        KeyboardShortcuts.isEnabled = false
+    }
+
+    func resumeAll() {
+        KeyboardShortcuts.isEnabled = true
+    }
 }

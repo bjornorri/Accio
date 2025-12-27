@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
 /// A view displaying hotkey bindings in macOS Settings style
 struct BindingListView: View {
     @Injected(\.appMetadataProvider) private var appMetadataProvider
+    @Injected(\.hotkeyManager) private var hotkeyManager
     @Default(.hotkeyBindings) private var bindings
     @State private var selection: Set<HotkeyBinding.ID> = []
     @State private var searchText = ""
@@ -226,10 +227,12 @@ struct BindingListView: View {
                         appMetadataProvider: appMetadataProvider,
                         refreshTrigger: refreshTrigger,
                         shouldActivateRecorder: binding.id == activeRecorderID,
-                        onRecorderActivated: {
+                        onRecorderActivated: { [self] in
+                            hotkeyManager.pauseAll()
                             selection = [binding.id]
                         },
                         onRecorderDeactivated: { [self] in
+                            hotkeyManager.resumeAll()
                             coordinator?.focusCoordinator.focusList()
                         }
                     )

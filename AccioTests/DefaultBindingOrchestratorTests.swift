@@ -147,4 +147,8 @@ class MockHotkeyManager: HotkeyManager {
         unregisteredNames.append(contentsOf: handlers.keys)
         handlers.removeAll()
     }
+
+    func pauseAll() {}
+
+    func resumeAll() {}
 }
