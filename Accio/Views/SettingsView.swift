@@ -119,7 +119,7 @@ struct GeneralSettingsView: View {
                                 .foregroundStyle(hasPermission ? .green : .yellow)
                             Text("Accessibility Access")
                         }
-                        Text("Enables window cycling within apps")
+                        Text("Enables switching between app windows")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

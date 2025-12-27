@@ -44,7 +44,7 @@ enum FocusedAction: String, Codable, Defaults.Serializable, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .cycleWindows: return "Cycle Windows"
+        case .cycleWindows: return "Next App Window"
         case .hideApp: return "Hide App"
         case .doNothing: return "Do Nothing"
         }
