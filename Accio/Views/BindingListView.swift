@@ -334,6 +334,7 @@ struct BindingRowView: View {
 
             // Shortcut recorder
             FocusableRecorder(name: shortcutName, shouldFocus: shouldFocus)
+                .focusable(false)
         }
         .padding(.vertical, 4)
     }
