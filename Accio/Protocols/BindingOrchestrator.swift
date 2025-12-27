@@ -17,4 +17,13 @@ protocol BindingOrchestrator: AnyObject {
 
     /// Stop observing and unregister all bindings
     func stop()
+
+    /// Find a conflict for the given binding's current shortcut
+    /// - Parameter bindingId: The ID of the binding to check
+    /// - Returns: A conflict if one exists, nil otherwise
+    func findConflict(for bindingId: HotkeyBinding.ID) -> ShortcutConflict?
+
+    /// Clear the shortcut for a binding
+    /// - Parameter bindingId: The ID of the binding to clear
+    func clearShortcut(for bindingId: HotkeyBinding.ID)
 }

@@ -14,12 +14,15 @@ import UniformTypeIdentifiers
 struct BindingListView: View {
     @Injected(\.appMetadataProvider) private var appMetadataProvider
     @Injected(\.hotkeyManager) private var hotkeyManager
+    @Injected(\.bindingOrchestrator) private var bindingOrchestrator
     @Default(.hotkeyBindings) private var bindings
     @State private var selection: Set<HotkeyBinding.ID> = []
     @State private var searchText = ""
     @State private var refreshTrigger = false
     @State private var activeRecorderID: HotkeyBinding.ID?
     @State private var coordinator: BindingListViewCoordinator?
+    @State private var recordingBindingID: HotkeyBinding.ID?
+    @State private var previousShortcut: KeyboardShortcuts.Shortcut?
     @FocusState private var isSearchFocused: Bool
 
     var body: some View {
@@ -230,9 +233,14 @@ struct BindingListView: View {
                         onRecorderActivated: { [self] in
                             hotkeyManager.pauseAll()
                             selection = [binding.id]
+                            recordingBindingID = binding.id
+                            previousShortcut = KeyboardShortcuts.getShortcut(
+                                for: .init(binding.shortcutName)
+                            )
                         },
                         onRecorderDeactivated: { [self] in
                             hotkeyManager.resumeAll()
+                            handleRecordingEnded()
                             coordinator?.focusCoordinator.focusList()
                         }
                     )
@@ -254,6 +262,38 @@ struct BindingListView: View {
     }
 
     // MARK: - Actions
+
+    private func handleRecordingEnded() {
+        guard let bindingID = recordingBindingID else { return }
+        let savedPreviousShortcut = previousShortcut
+
+        recordingBindingID = nil
+        previousShortcut = nil
+
+        guard let conflict = bindingOrchestrator.findConflict(for: bindingID) else {
+            return
+        }
+
+        // Restore previous shortcut before showing dialog so UI doesn't change prematurely
+        let editedName = KeyboardShortcuts.Name(conflict.editedBinding.shortcutName)
+        let newShortcut = conflict.shortcut
+        KeyboardShortcuts.setShortcut(savedPreviousShortcut, for: editedName)
+
+        let alert = NSAlert()
+        alert.messageText = "Shortcut Already in Use"
+        alert.informativeText = "This shortcut is already assigned to \(conflict.conflictingBinding.appName). Do you want to reassign it to \(conflict.editedBinding.appName)?"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Reassign")
+        alert.addButton(withTitle: "Cancel")
+
+        let response = alert.runModal()
+
+        if response == .alertFirstButtonReturn {
+            // Reassign: apply the new shortcut and clear it from the conflicting binding
+            KeyboardShortcuts.setShortcut(newShortcut, for: editedName)
+            bindingOrchestrator.clearShortcut(for: conflict.conflictingBinding.id)
+        }
+    }
 
     private func addBinding() {
         let wasSearchFocused = isSearchFocused

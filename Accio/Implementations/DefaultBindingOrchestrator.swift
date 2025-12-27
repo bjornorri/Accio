@@ -117,4 +117,34 @@ final class DefaultBindingOrchestrator: BindingOrchestrator {
         let settings = Defaults[.appBehaviorSettings]
         await actionCoordinator.executeAction(for: binding.appBundleIdentifier, settings: settings)
     }
+
+    // MARK: - Conflict Detection
+
+    func findConflict(for bindingId: HotkeyBinding.ID) -> ShortcutConflict? {
+        let bindings = Defaults[.hotkeyBindings]
+
+        guard let editedBinding = bindings.first(where: { $0.id == bindingId }),
+              let recordedShortcut = KeyboardShortcuts.getShortcut(for: .init(editedBinding.shortcutName)) else {
+            return nil
+        }
+
+        for other in bindings where other.id != bindingId {
+            if KeyboardShortcuts.getShortcut(for: .init(other.shortcutName)) == recordedShortcut {
+                return ShortcutConflict(
+                    editedBinding: editedBinding,
+                    conflictingBinding: other,
+                    shortcut: recordedShortcut
+                )
+            }
+        }
+
+        return nil
+    }
+
+    func clearShortcut(for bindingId: HotkeyBinding.ID) {
+        let bindings = Defaults[.hotkeyBindings]
+        if let binding = bindings.first(where: { $0.id == bindingId }) {
+            KeyboardShortcuts.setShortcut(nil, for: .init(binding.shortcutName))
+        }
+    }
 }
