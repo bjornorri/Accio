@@ -253,8 +253,8 @@ struct BindingListView: View {
     // MARK: - Actions
 
     private func addBinding() {
-        let previousFirstResponder = NSApp.keyWindow?.firstResponder
         let wasSearchFocused = isSearchFocused
+        let wasListFocused = coordinator?.focusCoordinator.isListFocused() ?? false
 
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
@@ -299,8 +299,10 @@ struct BindingListView: View {
         } else {
             if wasSearchFocused {
                 isSearchFocused = true
-            } else if let responder = previousFirstResponder {
-                NSApp.keyWindow?.makeFirstResponder(responder)
+            } else if wasListFocused {
+                DispatchQueue.main.async {
+                    coordinator?.focusCoordinator.focusList()
+                }
             }
         }
     }
