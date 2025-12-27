@@ -305,7 +305,7 @@ struct BindingRowView: View {
             Spacer()
 
             // Shortcut recorder
-            KeyboardShortcuts.Recorder(for: shortcutName)
+            ShortcutRecorder(name: shortcutName)
         }
         .padding(.vertical, 4)
     }
