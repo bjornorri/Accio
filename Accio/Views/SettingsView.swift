@@ -36,7 +36,7 @@ struct SettingsView: View {
     }
 }
 
-/// Modifier that adds Cmd+1/2/... and Cmd+Shift+{/} keyboard shortcuts for tab navigation
+/// Modifier that adds Cmd+1/2/... keyboard shortcuts for tab navigation
 private struct TabNavigationShortcutsModifier: ViewModifier {
     @Binding var selectedTab: SettingsView.SettingsTab
     @State private var monitor: Any?
@@ -51,42 +51,18 @@ private struct TabNavigationShortcutsModifier: ViewModifier {
                     guard let window = event.window,
                           window.isKeyWindow,
                           event.modifierFlags.contains(.command),
-                          let characters = event.charactersIgnoringModifiers else {
+                          !event.modifierFlags.contains(.shift),
+                          !event.modifierFlags.contains(.option),
+                          let characters = event.charactersIgnoringModifiers,
+                          let number = Int(characters) else {
                         return event
                     }
 
-                    let hasShift = event.modifierFlags.contains(.shift)
-                    let hasOption = event.modifierFlags.contains(.option)
-
-                    // Cmd+1, Cmd+2, etc. (no shift, no option)
-                    if !hasShift && !hasOption, let number = Int(characters) {
-                        let index = number - 1 // Cmd+1 = index 0, Cmd+2 = index 1, etc.
-                        if tabs.indices.contains(index) {
-                            selectedTab = tabs[index]
-                            return nil
-                        }
-                    }
-
-                    // Cmd+Shift+{ / Cmd+Shift+} (shift, no option) - with wrap around
-                    if hasShift && !hasOption {
-                        guard let currentIndex = tabs.firstIndex(of: selectedTab) else {
-                            return event
-                        }
-
-                        switch characters {
-                        case "{":
-                            let newIndex = currentIndex == tabs.startIndex
-                                ? tabs.index(before: tabs.endIndex)
-                                : tabs.index(before: currentIndex)
-                            selectedTab = tabs[newIndex]
-                            return nil
-                        case "}":
-                            let newIndex = tabs.index(after: currentIndex)
-                            selectedTab = newIndex == tabs.endIndex ? tabs[tabs.startIndex] : tabs[newIndex]
-                            return nil
-                        default:
-                            break
-                        }
+                    // Cmd+1, Cmd+2, etc.
+                    let index = number - 1 // Cmd+1 = index 0, Cmd+2 = index 1, etc.
+                    if tabs.indices.contains(index) {
+                        selectedTab = tabs[index]
+                        return nil
                     }
 
                     return event
