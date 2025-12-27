@@ -7,17 +7,32 @@ import AppKit
 import KeyboardShortcuts
 import SwiftUI
 
-/// A keyboard shortcut recorder that always selects all text when focused
+/// A keyboard shortcut recorder that selects all text when focused
 struct ShortcutRecorder: NSViewRepresentable {
     let name: KeyboardShortcuts.Name
+    var shouldActivate: Bool = false
+    var onActivated: (() -> Void)?
+    var onDeactivated: (() -> Void)?
 
     func makeNSView(context: Context) -> KeyboardShortcuts.RecorderCocoa {
         let recorder = KeyboardShortcuts.RecorderCocoa(for: name)
         context.coordinator.recorder = recorder
+        context.coordinator.onActivated = onActivated
+        context.coordinator.onDeactivated = onDeactivated
         return recorder
     }
 
-    func updateNSView(_ nsView: KeyboardShortcuts.RecorderCocoa, context: Context) {}
+    func updateNSView(_ nsView: KeyboardShortcuts.RecorderCocoa, context: Context) {
+        context.coordinator.onActivated = onActivated
+        context.coordinator.onDeactivated = onDeactivated
+
+        // Programmatically activate if requested
+        if shouldActivate && !context.coordinator.isRecording {
+            DispatchQueue.main.async {
+                nsView.window?.makeFirstResponder(nsView)
+            }
+        }
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -25,8 +40,10 @@ struct ShortcutRecorder: NSViewRepresentable {
 
     final class Coordinator {
         weak var recorder: KeyboardShortcuts.RecorderCocoa?
+        var onActivated: (() -> Void)?
+        var onDeactivated: (() -> Void)?
         private var observer: NSObjectProtocol?
-        private var didSelectAll = false
+        private(set) var isRecording = false
 
         init() {
             observer = NotificationCenter.default.addObserver(
@@ -52,11 +69,14 @@ struct ShortcutRecorder: NSViewRepresentable {
 
             let isFirstResponder = window.firstResponder === recorder.currentEditor()
 
-            if isFirstResponder && !didSelectAll {
+            if isFirstResponder && !isRecording {
+                // Starting to record - select all text for consistent behavior
                 recorder.currentEditor()?.selectAll(nil)
-                didSelectAll = true
-            } else if !isFirstResponder {
-                didSelectAll = false
+                isRecording = true
+                onActivated?()
+            } else if !isFirstResponder && isRecording {
+                isRecording = false
+                onDeactivated?()
             }
         }
     }

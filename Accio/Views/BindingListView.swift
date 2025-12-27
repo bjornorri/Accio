@@ -17,7 +17,9 @@ struct BindingListView: View {
     @State private var selection: Set<HotkeyBinding.ID> = []
     @State private var searchText = ""
     @State private var refreshTrigger = false
-    @State private var keyboardHandler: BindingListKeyboardHandler?
+    @State private var activeRecorderID: HotkeyBinding.ID?
+    @State private var coordinator: BindingListViewCoordinator?
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         Group {
@@ -33,22 +35,74 @@ struct BindingListView: View {
         .frame(maxWidth: 800)
         .frame(maxWidth: .infinity)
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
-            // Update cached app metadata for installed apps, then trigger refresh
             updateAppMetadata()
             refreshTrigger.toggle()
         }
         .onAppear {
-            setupKeyboardHandler()
+            setupCoordinator()
         }
         .onDisappear {
-            keyboardHandler?.stop()
-            keyboardHandler = nil
+            coordinator?.stop()
+            coordinator = nil
         }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             handleDrop(providers: providers)
             return true
         }
     }
+
+    // MARK: - Setup
+
+    private func setupCoordinator() {
+        let newCoordinator = BindingListViewCoordinator()
+
+        // Configure focus coordinator
+        newCoordinator.focusCoordinator.onListFocused = { [self] in
+            handleListFocused()
+        }
+        newCoordinator.focusCoordinator.isSearchFocused = { [self] in
+            isSearchFocused
+        }
+        newCoordinator.focusCoordinator.setSearchFocused = { [self] focused in
+            isSearchFocused = focused
+        }
+
+        // Configure state callbacks
+        newCoordinator.checkHasSelection = { [self] in !selection.isEmpty }
+        newCoordinator.checkHasSingleSelection = { [self] in selection.count == 1 }
+        newCoordinator.checkHasFilter = { [self] in !searchText.isEmpty }
+
+        // Configure action callbacks
+        newCoordinator.onAddItem = { [self] in addBinding() }
+        newCoordinator.onRemoveSelected = { [self] in removeSelected() }
+        newCoordinator.onFocusSearch = { [self] in isSearchFocused = true }
+        newCoordinator.onActivateSelected = { [self] in activateSelectedRecorder() }
+        newCoordinator.onClearFilter = { [self] in searchText = "" }
+
+        newCoordinator.start()
+        coordinator = newCoordinator
+    }
+
+    private func handleListFocused() {
+        let filteredIDs = Set(filteredBindings.map(\.id))
+        let validSelection = selection.intersection(filteredIDs)
+
+        if validSelection.isEmpty, let firstBinding = filteredBindings.first {
+            selection = [firstBinding.id]
+        } else if validSelection != selection {
+            selection = validSelection
+        }
+    }
+
+    private func activateSelectedRecorder() {
+        guard let selectedID = selection.first, selection.count == 1 else { return }
+        activeRecorderID = selectedID
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            activeRecorderID = nil
+        }
+    }
+
+    // MARK: - Drag and Drop
 
     private func handleDrop(providers: [NSItemProvider]) {
         for provider in providers {
@@ -58,7 +112,6 @@ struct BindingListView: View {
                       url.pathExtension == "app" else {
                     return
                 }
-
                 DispatchQueue.main.async {
                     addBindingForApp(at: url)
                 }
@@ -68,12 +121,8 @@ struct BindingListView: View {
 
     private func addBindingForApp(at url: URL) {
         guard let bundle = Bundle(url: url),
-              let bundleIdentifier = bundle.bundleIdentifier else {
-            return
-        }
-
-        // Skip if app is already in the list
-        guard !bindings.contains(where: { $0.appBundleIdentifier == bundleIdentifier }) else {
+              let bundleIdentifier = bundle.bundleIdentifier,
+              !bindings.contains(where: { $0.appBundleIdentifier == bundleIdentifier }) else {
             return
         }
 
@@ -92,15 +141,7 @@ struct BindingListView: View {
         selection = [id]
     }
 
-    private func setupKeyboardHandler() {
-        let handler = BindingListKeyboardHandler(
-            hasSelection: { !selection.isEmpty },
-            onAddItem: { addBinding() },
-            onRemoveSelected: { removeSelected() }
-        )
-        handler.start()
-        keyboardHandler = handler
-    }
+    // MARK: - App Metadata
 
     private func updateAppMetadata() {
         var updated = false
@@ -123,6 +164,18 @@ struct BindingListView: View {
             bindings = updatedBindings
         }
     }
+
+    // MARK: - Computed Properties
+
+    private var filteredBindings: [HotkeyBinding] {
+        let sorted = bindings.sorted { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+        if searchText.isEmpty {
+            return sorted
+        }
+        return sorted.filter { $0.appName.localizedCaseInsensitiveContains(searchText) }
+    }
+
+    // MARK: - Views
 
     private var emptyStateView: some View {
         ContentUnavailableView {
@@ -164,22 +217,21 @@ struct BindingListView: View {
         .background(.bar)
     }
 
-    private var filteredBindings: [HotkeyBinding] {
-        let sorted = bindings.sorted { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
-        if searchText.isEmpty {
-            return sorted
-        }
-        return sorted.filter { $0.appName.localizedCaseInsensitiveContains(searchText) }
-    }
-
     private var bindingsList: some View {
-        ScrollViewReader { proxy in
+        ScrollViewReader { _ in
             List(selection: $selection) {
                 ForEach(filteredBindings) { binding in
                     BindingRowView(
                         binding: binding,
                         appMetadataProvider: appMetadataProvider,
-                        refreshTrigger: refreshTrigger
+                        refreshTrigger: refreshTrigger,
+                        shouldActivateRecorder: binding.id == activeRecorderID,
+                        onRecorderActivated: {
+                            selection = [binding.id]
+                        },
+                        onRecorderDeactivated: { [self] in
+                            coordinator?.focusCoordinator.focusList()
+                        }
                     )
                     .tag(binding.id)
                     .id(binding.id)
@@ -189,10 +241,21 @@ struct BindingListView: View {
             .alternatingRowBackgrounds()
             .environment(\.defaultMinListRowHeight, 40)
             .searchable(text: $searchText, placement: .toolbar)
+            .searchFocused($isSearchFocused)
+            .onChange(of: isSearchFocused) { _, isFocused in
+                if !isFocused {
+                    coordinator?.focusCoordinator.handleSearchFocusLost()
+                }
+            }
         }
     }
 
+    // MARK: - Actions
+
     private func addBinding() {
+        let previousFirstResponder = NSApp.keyWindow?.firstResponder
+        let wasSearchFocused = isSearchFocused
+
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
@@ -207,16 +270,11 @@ struct BindingListView: View {
 
             for url in panel.urls {
                 guard let bundle = Bundle(url: url),
-                      let bundleIdentifier = bundle.bundleIdentifier else {
+                      let bundleIdentifier = bundle.bundleIdentifier,
+                      !bindings.contains(where: { $0.appBundleIdentifier == bundleIdentifier }) else {
                     continue
                 }
 
-                // Skip if app is already in the list
-                guard !bindings.contains(where: { $0.appBundleIdentifier == bundleIdentifier }) else {
-                    continue
-                }
-
-                // Capture app name at creation time
                 let appName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
                     ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String
                     ?? url.deletingPathExtension().lastPathComponent
@@ -234,6 +292,15 @@ struct BindingListView: View {
 
             if let firstID = addedIDs.first {
                 selection = [firstID]
+                DispatchQueue.main.async {
+                    coordinator?.focusCoordinator.focusList()
+                }
+            }
+        } else {
+            if wasSearchFocused {
+                isSearchFocused = true
+            } else if let responder = previousFirstResponder {
+                NSApp.keyWindow?.makeFirstResponder(responder)
             }
         }
     }
@@ -241,7 +308,6 @@ struct BindingListView: View {
     private func removeSelected() {
         guard !selection.isEmpty else { return }
 
-        // Clear shortcuts and remove bindings for all selected items
         for selectedId in selection {
             if let binding = bindings.first(where: { $0.id == selectedId }) {
                 let name = KeyboardShortcuts.Name(binding.shortcutName)
@@ -251,63 +317,6 @@ struct BindingListView: View {
 
         bindings.removeAll { selection.contains($0.id) }
         selection = []
-    }
-}
-
-/// A row displaying app icon, name, and shortcut recorder
-struct BindingRowView: View {
-    let binding: HotkeyBinding
-    let appMetadataProvider: AppMetadataProvider
-    let refreshTrigger: Bool
-
-    private var isAppInstalled: Bool {
-        // refreshTrigger ensures this is re-evaluated when window becomes active
-        _ = refreshTrigger
-        return appMetadataProvider.isInstalled(binding.appBundleIdentifier)
-    }
-
-    private var appIcon: NSImage? {
-        _ = refreshTrigger
-        return appMetadataProvider.appIcon(for: binding.appBundleIdentifier)
-    }
-
-    private var shortcutName: KeyboardShortcuts.Name {
-        KeyboardShortcuts.Name(binding.shortcutName)
-    }
-
-    var body: some View {
-        HStack(spacing: 10) {
-            // App icon
-            if let icon = appIcon {
-                Image(nsImage: icon)
-                    .resizable()
-                    .frame(width: 32, height: 32)
-            } else {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.title)
-                    .frame(width: 32, height: 32)
-                    .foregroundStyle(.yellow)
-            }
-
-            // App name (use cached name from binding)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(binding.appName)
-                    .lineLimit(1)
-                    .foregroundStyle(isAppInstalled ? .primary : .secondary)
-
-                if !isAppInstalled {
-                    Text("Not Installed")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Spacer()
-
-            // Shortcut recorder
-            ShortcutRecorder(name: shortcutName)
-        }
-        .padding(.vertical, 4)
     }
 }
 

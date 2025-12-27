@@ -9,6 +9,9 @@ import AppKit
 enum KeyboardAction {
     case addItem
     case removeSelected
+    case focusSearch
+    case activateSelected
+    case clearFilter
 }
 
 /// Protocol for handling keyboard shortcuts in list views
@@ -20,25 +23,44 @@ protocol KeyboardShortcutHandler: AnyObject {
     func canHandle(_ action: KeyboardAction) -> Bool
 }
 
+// MARK: - Delegate Protocol
+
+/// Delegate protocol for BindingListKeyboardHandler
+protocol BindingListKeyboardHandlerDelegate: AnyObject {
+    /// Returns whether there is at least one selected item
+    var hasSelection: Bool { get }
+
+    /// Returns whether exactly one item is selected
+    var hasSingleSelection: Bool { get }
+
+    /// Returns whether the list is currently focused
+    var isListFocused: Bool { get }
+
+    /// Returns whether a search filter is active
+    var hasFilter: Bool { get }
+
+    /// Called when the add item action is triggered (Cmd+N)
+    func keyboardHandlerDidRequestAddItem()
+
+    /// Called when the remove selected action is triggered (Delete/Backspace)
+    func keyboardHandlerDidRequestRemoveSelected()
+
+    /// Called when the focus search action is triggered (Cmd+F)
+    func keyboardHandlerDidRequestFocusSearch()
+
+    /// Called when the activate selected action is triggered (Enter/Space)
+    func keyboardHandlerDidRequestActivateSelected()
+
+    /// Called when the clear filter action is triggered (Escape)
+    func keyboardHandlerDidRequestClearFilter()
+}
+
 // MARK: - Keyboard Handler for Binding List
 
 /// Handles keyboard shortcuts for the binding list view
 final class BindingListKeyboardHandler: KeyboardShortcutHandler {
     private var monitor: Any?
-
-    private let hasSelection: () -> Bool
-    private let onAddItem: () -> Void
-    private let onRemoveSelected: () -> Void
-
-    init(
-        hasSelection: @escaping () -> Bool,
-        onAddItem: @escaping () -> Void,
-        onRemoveSelected: @escaping () -> Void
-    ) {
-        self.hasSelection = hasSelection
-        self.onAddItem = onAddItem
-        self.onRemoveSelected = onRemoveSelected
-    }
+    weak var delegate: BindingListKeyboardHandlerDelegate?
 
     func start() {
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -54,20 +76,34 @@ final class BindingListKeyboardHandler: KeyboardShortcutHandler {
     }
 
     func canHandle(_ action: KeyboardAction) -> Bool {
+        guard let delegate else { return false }
+
         switch action {
-        case .addItem:
+        case .addItem, .focusSearch:
             return true
         case .removeSelected:
-            return hasSelection()
+            return delegate.isListFocused && delegate.hasSelection
+        case .activateSelected:
+            return delegate.isListFocused && delegate.hasSingleSelection
+        case .clearFilter:
+            return delegate.isListFocused && delegate.hasFilter
         }
     }
 
     func handle(_ action: KeyboardAction) {
+        guard let delegate else { return }
+
         switch action {
         case .addItem:
-            onAddItem()
+            delegate.keyboardHandlerDidRequestAddItem()
         case .removeSelected:
-            onRemoveSelected()
+            delegate.keyboardHandlerDidRequestRemoveSelected()
+        case .focusSearch:
+            delegate.keyboardHandlerDidRequestFocusSearch()
+        case .activateSelected:
+            delegate.keyboardHandlerDidRequestActivateSelected()
+        case .clearFilter:
+            delegate.keyboardHandlerDidRequestClearFilter()
         }
     }
 
@@ -87,10 +123,34 @@ final class BindingListKeyboardHandler: KeyboardShortcutHandler {
             }
         }
 
+        // Cmd+F: Focus search
+        if hasCommand && event.charactersIgnoringModifiers == "f" {
+            if canHandle(.focusSearch) {
+                handle(.focusSearch)
+                return nil
+            }
+        }
+
         // Delete/Backspace: Remove selected
         if hasNoModifiers && (event.keyCode == 51 || event.keyCode == 117) {
             if canHandle(.removeSelected) {
                 handle(.removeSelected)
+                return nil
+            }
+        }
+
+        // Return/Enter/Space: Activate selected item's recorder
+        if hasNoModifiers && (event.keyCode == 36 || event.keyCode == 76 || event.keyCode == 49) {
+            if canHandle(.activateSelected) {
+                handle(.activateSelected)
+                return nil
+            }
+        }
+
+        // Escape: Clear filter when list is focused
+        if hasNoModifiers && event.keyCode == 53 {
+            if canHandle(.clearFilter) {
+                handle(.clearFilter)
                 return nil
             }
         }
