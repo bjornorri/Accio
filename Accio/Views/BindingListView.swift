@@ -310,6 +310,44 @@ struct BindingListView: View {
     private func removeSelected() {
         guard !selection.isEmpty else { return }
 
+        // Find the index to select after removal
+        let currentList = filteredBindings
+        let selectedIndices = selection.compactMap { id in
+            currentList.firstIndex { $0.id == id }
+        }.sorted()
+
+        // Determine the next item to select
+        let nextSelectionID: HotkeyBinding.ID? = {
+            guard let lastSelectedIndex = selectedIndices.last else { return nil }
+            let remainingCount = currentList.count - selection.count
+            guard remainingCount > 0 else { return nil }
+
+            // Try to select the next item after the last selected one
+            let nextIndex = lastSelectedIndex + 1
+            if nextIndex < currentList.count {
+                // Find the next item that isn't being removed
+                for i in nextIndex..<currentList.count {
+                    let id = currentList[i].id
+                    if !selection.contains(id) {
+                        return id
+                    }
+                }
+            }
+
+            // Fall back to the previous item before the first selected one
+            if let firstSelectedIndex = selectedIndices.first, firstSelectedIndex > 0 {
+                for i in stride(from: firstSelectedIndex - 1, through: 0, by: -1) {
+                    let id = currentList[i].id
+                    if !selection.contains(id) {
+                        return id
+                    }
+                }
+            }
+
+            return nil
+        }()
+
+        // Clear shortcuts for removed bindings
         for selectedId in selection {
             if let binding = bindings.first(where: { $0.id == selectedId }) {
                 let name = KeyboardShortcuts.Name(binding.shortcutName)
@@ -318,7 +356,12 @@ struct BindingListView: View {
         }
 
         bindings.removeAll { selection.contains($0.id) }
-        selection = []
+
+        if let nextID = nextSelectionID {
+            selection = [nextID]
+        } else {
+            selection = []
+        }
     }
 }
 
