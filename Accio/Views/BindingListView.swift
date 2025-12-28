@@ -264,15 +264,14 @@ struct BindingListView: View {
                     )
                     .tag(binding.id)
                     .id(binding.id)
-                    .selectOnRightClick(id: binding.id, selection: $selection) {
-                        coordinator?.focusCoordinator.focusList()
-                    }
                     .contextMenu {
                         Button("Record Shortcut") {
+                            selection = [binding.id]
                             activateRecorder(for: binding.id)
                         }
                         Divider()
                         Button("Remove", role: .destructive) {
+                            selection = [binding.id]
                             removeSelected()
                         }
                     }
