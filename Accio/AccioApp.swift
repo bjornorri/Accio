@@ -20,6 +20,14 @@ struct AccioApp: App {
         .commands {
             // Remove the native Settings menu item
             CommandGroup(replacing: .appSettings) { }
+
+            // Add Edit > Find menu item
+            CommandGroup(after: .textEditing) {
+                Button("Find") {
+                    NotificationCenter.default.post(name: .performFind, object: nil)
+                }
+                .keyboardShortcut("f", modifiers: .command)
+            }
         }
     }
 }

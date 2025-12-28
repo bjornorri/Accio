@@ -9,6 +9,10 @@ import AppKit
 import FactoryKit
 import SwiftUI
 
+extension Notification.Name {
+    static let performFind = Notification.Name("performFind")
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
 

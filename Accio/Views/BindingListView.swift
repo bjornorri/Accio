@@ -42,6 +42,9 @@ struct BindingListView: View {
             updateAppMetadata()
             refreshTrigger.toggle()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .performFind)) { _ in
+            isSearchFocused = true
+        }
         .onAppear {
             setupCoordinator()
         }

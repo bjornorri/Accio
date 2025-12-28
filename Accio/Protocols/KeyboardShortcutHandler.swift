@@ -123,13 +123,7 @@ final class BindingListKeyboardHandler: KeyboardShortcutHandler {
             }
         }
 
-        // Cmd+F: Focus search
-        if hasCommand && event.charactersIgnoringModifiers == "f" {
-            if canHandle(.focusSearch) {
-                handle(.focusSearch)
-                return nil
-            }
-        }
+        // Cmd+F is handled by Edit > Find menu item
 
         // Delete/Backspace: Remove selected
         if hasNoModifiers && (event.keyCode == 51 || event.keyCode == 117) {
