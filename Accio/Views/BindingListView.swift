@@ -13,6 +13,7 @@ struct BindingListView: View {
     @Injected(\.appMetadataProvider) private var appMetadataProvider
     @State private var viewModel = BindingListViewModel()
     @State private var coordinator: BindingListViewCoordinator?
+    @State private var visibleBindingIDs: Set<HotkeyBinding.ID> = []
     @FocusState private var isSearchFocused: Bool
 
     var body: some View {
@@ -160,6 +161,8 @@ struct BindingListView: View {
                     )
                     .tag(binding.id)
                     .id(binding.id)
+                    .onAppear { visibleBindingIDs.insert(binding.id) }
+                    .onDisappear { visibleBindingIDs.remove(binding.id) }
                     .contextMenu {
                         Button("Record Shortcut") {
                             viewModel.selection = [binding.id]
@@ -185,10 +188,15 @@ struct BindingListView: View {
             }
             .onChange(of: viewModel.scrollToID) { _, id in
                 if let id {
-                    withAnimation {
-                        proxy.scrollTo(id, anchor: .center)
+                    // Delay to allow the new row to appear and update visibleBindingIDs
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        if !visibleBindingIDs.contains(id) {
+                            withAnimation {
+                                proxy.scrollTo(id, anchor: .center)
+                            }
+                        }
+                        viewModel.scrollToID = nil
                     }
-                    viewModel.scrollToID = nil
                 }
             }
         }
