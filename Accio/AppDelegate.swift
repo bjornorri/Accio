@@ -67,5 +67,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         openSettings()
         return false
     }
+
 }
 
