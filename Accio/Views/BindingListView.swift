@@ -25,6 +25,7 @@ struct BindingListView: View {
     @State private var recordingBindingID: HotkeyBinding.ID?
     @State private var previousShortcut: KeyboardShortcuts.Shortcut?
     @FocusState private var isSearchFocused: Bool
+    @State private var scrollToID: HotkeyBinding.ID?
 
     var body: some View {
         Group {
@@ -154,6 +155,7 @@ struct BindingListView: View {
         )
         bindings.append(newBinding)
         selection = [id]
+        scrollToID = id
 
         undoManager.registerUndo { [self, newBinding] in
             removeBindings([newBinding])
@@ -238,7 +240,7 @@ struct BindingListView: View {
     }
 
     private var bindingsList: some View {
-        ScrollViewReader { _ in
+        ScrollViewReader { proxy in
             List(selection: $selection) {
                 ForEach(filteredBindings) { binding in
                     BindingRowView(
@@ -284,6 +286,14 @@ struct BindingListView: View {
             .onChange(of: isSearchFocused) { _, isFocused in
                 if !isFocused {
                     coordinator?.focusCoordinator.handleSearchFocusLost()
+                }
+            }
+            .onChange(of: scrollToID) { _, id in
+                if let id {
+                    withAnimation {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                    scrollToID = nil
                 }
             }
         }
@@ -421,6 +431,7 @@ struct BindingListView: View {
 
             if let firstID = addedIDs.first {
                 selection = [firstID]
+                scrollToID = firstID
                 DispatchQueue.main.async {
                     coordinator?.focusCoordinator.focusList()
                 }
@@ -561,6 +572,7 @@ struct BindingListView: View {
 
         if let firstID = bindingsToAdd.first?.id {
             selection = [firstID]
+            scrollToID = firstID
         }
 
         // Register undo to remove them
