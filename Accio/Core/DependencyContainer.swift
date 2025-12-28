@@ -92,4 +92,11 @@ extension Container {
         self { ContinuousClock() }
             .singleton
     }
+
+    // MARK: - Binding Undo Manager
+
+    var bindingUndoManager: Factory<BindingUndoManager> {
+        self { DefaultBindingUndoManager() }
+            .singleton
+    }
 }

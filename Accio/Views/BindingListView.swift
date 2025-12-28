@@ -15,6 +15,7 @@ struct BindingListView: View {
     @Injected(\.appMetadataProvider) private var appMetadataProvider
     @Injected(\.hotkeyManager) private var hotkeyManager
     @Injected(\.bindingOrchestrator) private var bindingOrchestrator
+    @Injected(\.bindingUndoManager) private var undoManager
     @Default(.hotkeyBindings) private var bindings
     @State private var selection: Set<HotkeyBinding.ID> = []
     @State private var searchText = ""
@@ -43,12 +44,15 @@ struct BindingListView: View {
             refreshTrigger.toggle()
         }
         .onReceive(NotificationCenter.default.publisher(for: .performFind)) { _ in
+            guard undoManager.isEnabled else { return }
             isSearchFocused = true
         }
         .onAppear {
+            undoManager.enable()
             setupCoordinator()
         }
         .onDisappear {
+            undoManager.disable()
             coordinator?.stop()
             coordinator = nil
         }
@@ -150,6 +154,11 @@ struct BindingListView: View {
         )
         bindings.append(newBinding)
         selection = [id]
+
+        undoManager.registerUndo { [self, newBinding] in
+            removeBindings([newBinding])
+        }
+        undoManager.setActionName("Add \(appName)")
     }
 
     // MARK: - App Metadata
@@ -283,35 +292,93 @@ struct BindingListView: View {
     // MARK: - Actions
 
     private func handleRecordingEnded() {
-        guard let bindingID = recordingBindingID else { return }
+        guard let bindingID = recordingBindingID,
+              let binding = bindings.first(where: { $0.id == bindingID }) else { return }
         let savedPreviousShortcut = previousShortcut
+        let editedName = KeyboardShortcuts.Name(binding.shortcutName)
+        let newShortcut = KeyboardShortcuts.getShortcut(for: editedName)
 
         recordingBindingID = nil
         previousShortcut = nil
 
-        guard let conflict = bindingOrchestrator.findConflict(for: bindingID) else {
-            return
+        // Check if shortcut actually changed
+        guard newShortcut != savedPreviousShortcut else { return }
+
+        // Check for conflicts
+        if let conflict = bindingOrchestrator.findConflict(for: bindingID) {
+            // Restore previous shortcut before showing dialog so UI doesn't change prematurely
+            KeyboardShortcuts.setShortcut(savedPreviousShortcut, for: editedName)
+
+            let alert = NSAlert()
+            alert.messageText = "Shortcut Already in Use"
+            alert.informativeText = "This shortcut is already assigned to \(conflict.conflictingBinding.appName). Do you want to reassign it to \(conflict.editedBinding.appName)?"
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Reassign")
+            alert.addButton(withTitle: "Cancel")
+
+            let response = alert.runModal()
+
+            if response == .alertFirstButtonReturn {
+                // Reassign: apply the new shortcut and clear it from the conflicting binding
+                let conflictingName = KeyboardShortcuts.Name(conflict.conflictingBinding.shortcutName)
+                let conflictingPreviousShortcut = KeyboardShortcuts.getShortcut(for: conflictingName)
+
+                KeyboardShortcuts.setShortcut(newShortcut, for: editedName)
+                bindingOrchestrator.clearShortcut(for: conflict.conflictingBinding.id)
+
+                // Register undo for both changes
+                undoManager.registerUndo { [self, binding, savedPreviousShortcut, conflict, conflictingPreviousShortcut] in
+                    KeyboardShortcuts.setShortcut(savedPreviousShortcut, for: editedName)
+                    if let conflictingPrevious = conflictingPreviousShortcut {
+                        KeyboardShortcuts.setShortcut(conflictingPrevious, for: conflictingName)
+                    }
+                    registerRedoForShortcutChange(
+                        binding: binding,
+                        fromShortcut: savedPreviousShortcut,
+                        toShortcut: newShortcut,
+                        conflictingBinding: conflict.conflictingBinding,
+                        conflictingPreviousShortcut: conflictingPreviousShortcut
+                    )
+                }
+                undoManager.setActionName("Record Shortcut")
+            }
+            // If cancelled, previous shortcut is already restored, nothing to undo
+        } else {
+            // No conflict - register undo for the shortcut change
+            undoManager.registerUndo { [self, binding, savedPreviousShortcut, newShortcut] in
+                KeyboardShortcuts.setShortcut(savedPreviousShortcut, for: editedName)
+                registerRedoForShortcutChange(binding: binding, fromShortcut: savedPreviousShortcut, toShortcut: newShortcut, conflictingBinding: nil, conflictingPreviousShortcut: nil)
+            }
+            undoManager.setActionName("Record Shortcut")
         }
+    }
 
-        // Restore previous shortcut before showing dialog so UI doesn't change prematurely
-        let editedName = KeyboardShortcuts.Name(conflict.editedBinding.shortcutName)
-        let newShortcut = conflict.shortcut
-        KeyboardShortcuts.setShortcut(savedPreviousShortcut, for: editedName)
-
-        let alert = NSAlert()
-        alert.messageText = "Shortcut Already in Use"
-        alert.informativeText = "This shortcut is already assigned to \(conflict.conflictingBinding.appName). Do you want to reassign it to \(conflict.editedBinding.appName)?"
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Reassign")
-        alert.addButton(withTitle: "Cancel")
-
-        let response = alert.runModal()
-
-        if response == .alertFirstButtonReturn {
-            // Reassign: apply the new shortcut and clear it from the conflicting binding
-            KeyboardShortcuts.setShortcut(newShortcut, for: editedName)
-            bindingOrchestrator.clearShortcut(for: conflict.conflictingBinding.id)
+    private func registerRedoForShortcutChange(
+        binding: HotkeyBinding,
+        fromShortcut: KeyboardShortcuts.Shortcut?,
+        toShortcut: KeyboardShortcuts.Shortcut?,
+        conflictingBinding: HotkeyBinding?,
+        conflictingPreviousShortcut: KeyboardShortcuts.Shortcut?
+    ) {
+        let editedName = KeyboardShortcuts.Name(binding.shortcutName)
+        undoManager.registerUndo { [self] in
+            KeyboardShortcuts.setShortcut(toShortcut, for: editedName)
+            if let conflicting = conflictingBinding {
+                let conflictingName = KeyboardShortcuts.Name(conflicting.shortcutName)
+                KeyboardShortcuts.setShortcut(nil, for: conflictingName)
+            }
+            // Register undo again for the next undo
+            undoManager.registerUndo { [self] in
+                KeyboardShortcuts.setShortcut(fromShortcut, for: editedName)
+                if let conflicting = conflictingBinding, let prevShortcut = conflictingPreviousShortcut {
+                    let conflictingName = KeyboardShortcuts.Name(conflicting.shortcutName)
+                    KeyboardShortcuts.setShortcut(prevShortcut, for: conflictingName)
+                }
+                registerRedoForShortcutChange(binding: binding, fromShortcut: fromShortcut, toShortcut: toShortcut, conflictingBinding: conflictingBinding, conflictingPreviousShortcut: conflictingPreviousShortcut)
+            }
+            undoManager.setActionName("Record Shortcut")
         }
+        undoManager.setActionName("Record Shortcut")
     }
 
     private func addBinding() {
@@ -357,6 +424,18 @@ struct BindingListView: View {
                 DispatchQueue.main.async {
                     coordinator?.focusCoordinator.focusList()
                 }
+            }
+
+            // Register undo for all added bindings
+            if !addedIDs.isEmpty {
+                let addedBindings = bindings.filter { addedIDs.contains($0.id) }
+                let actionName = addedBindings.count == 1
+                    ? "Add \(addedBindings[0].appName)"
+                    : "Add \(addedBindings.count) Shortcuts"
+                undoManager.registerUndo { [self, addedBindings] in
+                    removeBindings(addedBindings)
+                }
+                undoManager.setActionName(actionName)
             }
         } else {
             if wasSearchFocused {
@@ -409,12 +488,20 @@ struct BindingListView: View {
             return nil
         }()
 
-        // Clear shortcuts for removed bindings
-        for selectedId in selection {
-            if let binding = bindings.first(where: { $0.id == selectedId }) {
-                let name = KeyboardShortcuts.Name(binding.shortcutName)
-                KeyboardShortcuts.setShortcut(nil, for: name)
+        // Save bindings and their shortcuts for undo
+        let removedBindings = bindings.filter { selection.contains($0.id) }
+        var savedShortcuts: [HotkeyBinding.ID: KeyboardShortcuts.Shortcut] = [:]
+        for binding in removedBindings {
+            let name = KeyboardShortcuts.Name(binding.shortcutName)
+            if let shortcut = KeyboardShortcuts.getShortcut(for: name) {
+                savedShortcuts[binding.id] = shortcut
             }
+        }
+
+        // Clear shortcuts for removed bindings
+        for binding in removedBindings {
+            let name = KeyboardShortcuts.Name(binding.shortcutName)
+            KeyboardShortcuts.setShortcut(nil, for: name)
         }
 
         bindings.removeAll { selection.contains($0.id) }
@@ -424,6 +511,66 @@ struct BindingListView: View {
         } else {
             selection = []
         }
+
+        // Register undo
+        let actionName = removedBindings.count == 1
+            ? "Remove \(removedBindings[0].appName)"
+            : "Remove \(removedBindings.count) Shortcuts"
+        undoManager.registerUndo { [self, removedBindings, savedShortcuts] in
+            addBindings(removedBindings, shortcuts: savedShortcuts)
+        }
+        undoManager.setActionName(actionName)
+    }
+
+    private func removeBindings(_ bindingsToRemove: [HotkeyBinding]) {
+        let idsToRemove = Set(bindingsToRemove.map(\.id))
+
+        // Clear shortcuts
+        for binding in bindingsToRemove {
+            let name = KeyboardShortcuts.Name(binding.shortcutName)
+            KeyboardShortcuts.setShortcut(nil, for: name)
+        }
+
+        bindings.removeAll { idsToRemove.contains($0.id) }
+        selection = selection.subtracting(idsToRemove)
+
+        // Register undo to add them back
+        let actionName = bindingsToRemove.count == 1
+            ? "Remove \(bindingsToRemove[0].appName)"
+            : "Remove \(bindingsToRemove.count) Shortcuts"
+        undoManager.registerUndo { [self, bindingsToRemove] in
+            addBindings(bindingsToRemove, shortcuts: [:])
+        }
+        undoManager.setActionName(actionName)
+    }
+
+    private func addBindings(_ bindingsToAdd: [HotkeyBinding], shortcuts: [HotkeyBinding.ID: KeyboardShortcuts.Shortcut]) {
+        for binding in bindingsToAdd {
+            if !bindings.contains(where: { $0.id == binding.id }) {
+                bindings.append(binding)
+            }
+        }
+
+        // Restore shortcuts
+        for (id, shortcut) in shortcuts {
+            if let binding = bindingsToAdd.first(where: { $0.id == id }) {
+                let name = KeyboardShortcuts.Name(binding.shortcutName)
+                KeyboardShortcuts.setShortcut(shortcut, for: name)
+            }
+        }
+
+        if let firstID = bindingsToAdd.first?.id {
+            selection = [firstID]
+        }
+
+        // Register undo to remove them
+        let actionName = bindingsToAdd.count == 1
+            ? "Add \(bindingsToAdd[0].appName)"
+            : "Add \(bindingsToAdd.count) Shortcuts"
+        undoManager.registerUndo { [self, bindingsToAdd] in
+            removeBindings(bindingsToAdd)
+        }
+        undoManager.setActionName(actionName)
     }
 }
 
