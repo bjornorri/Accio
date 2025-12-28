@@ -103,7 +103,11 @@ struct BindingListView: View {
 
     private func activateSelectedRecorder() {
         guard let selectedID = selection.first, selection.count == 1 else { return }
-        activeRecorderID = selectedID
+        activateRecorder(for: selectedID)
+    }
+
+    private func activateRecorder(for bindingID: HotkeyBinding.ID) {
+        activeRecorderID = bindingID
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             activeRecorderID = nil
         }
@@ -249,6 +253,18 @@ struct BindingListView: View {
                     )
                     .tag(binding.id)
                     .id(binding.id)
+                    .selectOnRightClick(id: binding.id, selection: $selection) {
+                        coordinator?.focusCoordinator.focusList()
+                    }
+                    .contextMenu {
+                        Button("Record Shortcut") {
+                            activateRecorder(for: binding.id)
+                        }
+                        Divider()
+                        Button("Remove", role: .destructive) {
+                            removeSelected()
+                        }
+                    }
                 }
             }
             .listStyle(.inset)
