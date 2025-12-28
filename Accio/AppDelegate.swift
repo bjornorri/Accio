@@ -41,7 +41,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: "Accio")
+            let image = NSImage(resource: .menuBarIcon)
+            image.size = NSSize(width: 22, height: 22)
+            button.image = image
         }
 
         // Create menu
