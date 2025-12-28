@@ -125,30 +125,3 @@ struct DefaultBindingOrchestratorTests {
         #expect(mockHotkeyManager.registeredNames == ["safari"])
     }
 }
-
-// MARK: - Mock HotkeyManager
-
-class MockHotkeyManager: HotkeyManager {
-    var registeredNames: [String] = []
-    var unregisteredNames: [String] = []
-    var handlers: [String: () async -> Void] = [:]
-
-    func register(name: String, handler: @escaping () async -> Void) {
-        registeredNames.append(name)
-        handlers[name] = handler
-    }
-
-    func unregister(name: String) {
-        unregisteredNames.append(name)
-        handlers.removeValue(forKey: name)
-    }
-
-    func unregisterAll() {
-        unregisteredNames.append(contentsOf: handlers.keys)
-        handlers.removeAll()
-    }
-
-    func pauseAll() {}
-
-    func resumeAll() {}
-}

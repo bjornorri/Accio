@@ -25,6 +25,7 @@ struct DefaultActionCoordinatorTests {
         let mockWindowCycler = MockWindowCycler()
         let mockNotificationPoster = MockNotificationPoster()
         let mockAppMetadataProvider = MockAppMetadataProvider()
+        mockAppMetadataProvider.appNames["com.apple.Safari"] = "Test App"
 
         Container.shared.applicationManager.register { mockAppManager }
         Container.shared.windowCycler.register { mockWindowCycler }
@@ -238,22 +239,3 @@ class MockNotificationPoster: NotificationPoster {
     }
 }
 
-// MARK: - Mock AppMetadataProvider
-
-class MockAppMetadataProvider: AppMetadataProvider {
-    func appName(for bundleIdentifier: String) -> String? {
-        return "Test App"
-    }
-
-    func appIcon(for bundleIdentifier: String) -> NSImage? {
-        return nil
-    }
-
-    func appURL(for bundleIdentifier: String) -> URL? {
-        return nil
-    }
-
-    func isInstalled(_ bundleIdentifier: String) -> Bool {
-        return true
-    }
-}
