@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- App - centered rounded rectangle, ~220x220 -->
+  <g transform="translate(146, 146) scale(0.215)">
+    <path 
+      id="App" 
+      fill="#FFFFFF" 
+      fill-rule="evenodd" 
+      d="M 0 844 C 0 943.411255 80.588745 1024 180 1024 L 843 1024 C 942.411255 1024 1023 943.411255 1023 844 L 1023 181 C 1023 81.588745 942.411255 1 843 1 L 180 1 C 80.588745 1 0 81.588745 0 181 Z"
+    />
+  </g>
+</svg>

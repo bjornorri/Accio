@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Top-left arc - filled shape with rounded caps -->
+  <path 
+    d="M 55 310 
+       A 208 208 0 0 1 310 55
+       A 8 8 0 0 1 306 71
+       A 192 192 0 0 0 71 306
+       A 8 8 0 0 1 55 310
+       Z"
+    fill="#FFFFFF"
+  />
+  
+  <!-- Bottom-right arc - filled shape with rounded caps -->
+  <path 
+    d="M 457 202 
+       A 208 208 0 0 1 202 457
+       A 8 8 0 0 1 206 441
+       A 192 192 0 0 0 441 206
+       A 8 8 0 0 1 457 202
+       Z"
+    fill="#FFFFFF"
+  />
+</svg>

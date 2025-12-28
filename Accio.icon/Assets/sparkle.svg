@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Sparkle - center at distance 215 from (256,256) along y=x line -->
+  <g transform="translate(358, 54) scale(1.0)">
+    <path 
+      d="M 50 0 
+         Q 38 38, 0 50 
+         Q 38 62, 50 100 
+         Q 62 62, 100 50 
+         Q 62 38, 50 0 
+         Z" 
+      fill="#FFFFFF"
+    />
+  </g>
+</svg>

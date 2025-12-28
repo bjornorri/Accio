@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		98A2E6732F0195C70067C2F7 /* Accio.icon in Resources */ = {isa = PBXBuildFile; fileRef = 98A2E6722F0195C70067C2F7 /* Accio.icon */; };
 		98F501F12EF08834000582BD /* Clocks in Frameworks */ = {isa = PBXBuildFile; productRef = 98F501F02EF08834000582BD /* Clocks */; };
 		98F939032EEF0B4600D0B4D6 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 98F939022EEF0B4600D0B4D6 /* KeyboardShortcuts */; };
 		98F939062EEF0B7D00D0B4D6 /* FactoryKit in Frameworks */ = {isa = PBXBuildFile; productRef = 98F939052EEF0B7D00D0B4D6 /* FactoryKit */; };
@@ -28,6 +29,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		98A2E6722F0195C70067C2F7 /* Accio.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Accio.icon; sourceTree = "<group>"; };
 		98F938D22EEEE9AA00D0B4D6 /* Accio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Accio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		98F938E12EEEE9AB00D0B4D6 /* AccioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AccioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -74,6 +76,7 @@
 		98F938C92EEEE9AA00D0B4D6 = {
 			isa = PBXGroup;
 			children = (
+				98A2E6722F0195C70067C2F7 /* Accio.icon */,
 				98F938D42EEEE9AA00D0B4D6 /* Accio */,
 				98F938E42EEEE9AB00D0B4D6 /* AccioTests */,
 				98F938D32EEEE9AA00D0B4D6 /* Products */,
@@ -195,6 +198,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				98A2E6732F0195C70067C2F7 /* Accio.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -360,8 +364,9 @@
 		98F938F62EEEE9AB00D0B4D6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Accio;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -372,6 +377,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -394,8 +400,9 @@
 		98F938F72EEEE9AB00D0B4D6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Accio;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -406,6 +413,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
