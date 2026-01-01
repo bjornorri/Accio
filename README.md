@@ -10,10 +10,10 @@
 
 *Summon your MacOS apps with keyboard shortcuts.*
 
-<img width="450" alt="accio_general_settings" src="https://github.com/user-attachments/assets/524a0d67-94de-4e3a-b48f-9e204b1c739b#gh-light-mode-only" />
-<img width="450" alt="accio_shortcuts_settings" src="https://github.com/user-attachments/assets/e7eceb7f-227e-4d39-88ec-a8b6a94f1b87#gh-light-mode-only" />
-<img width="450" alt="accio_general_settings_dark" src="https://github.com/user-attachments/assets/4009c76a-3c21-431e-9e72-8fd4e44c82ea#gh-dark-mode-only" />
-<img width="450" alt="accio_shortcuts_settings_dark" src="https://github.com/user-attachments/assets/a9a0b368-e301-491a-abd8-f89fdd1482f0#gh-dark-mode-only" />
+<img width="400" alt="accio_general_settings" src="https://github.com/user-attachments/assets/524a0d67-94de-4e3a-b48f-9e204b1c739b#gh-light-mode-only" />
+<img width="400" alt="accio_shortcuts_settings" src="https://github.com/user-attachments/assets/e7eceb7f-227e-4d39-88ec-a8b6a94f1b87#gh-light-mode-only" />
+<img width="400" alt="accio_general_settings_dark" src="https://github.com/user-attachments/assets/4009c76a-3c21-431e-9e72-8fd4e44c82ea#gh-dark-mode-only" />
+<img width="400" alt="accio_shortcuts_settings_dark" src="https://github.com/user-attachments/assets/a9a0b368-e301-491a-abd8-f89fdd1482f0#gh-dark-mode-only" />
 
 
 
