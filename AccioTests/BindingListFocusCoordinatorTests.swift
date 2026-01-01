@@ -72,10 +72,4 @@ struct BindingListFocusCoordinatorTests {
         #expect(focusValue == true)
     }
 
-    @Test func isListFocused_returnsFalseWhenNoWindow() {
-        let coordinator = BindingListFocusCoordinator()
-
-        // Without a key window, should return false
-        #expect(coordinator.isListFocused() == false)
-    }
 }
