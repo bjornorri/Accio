@@ -83,11 +83,7 @@ final class BindingListFocusCoordinator {
 
     /// Checks if the list's table view is currently focused
     func isListFocused() -> Bool {
-        guard let window = NSApp.keyWindow,
-              let firstResponder = window.firstResponder else {
-            return false
-        }
-        return firstResponder is NSTableView
+        NSApp.keyWindow?.isTableViewFocused ?? false
     }
 
     // MARK: - Private Setup

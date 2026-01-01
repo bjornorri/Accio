@@ -8,6 +8,22 @@
 import AppKit
 import SwiftUI
 
+extension NSWindow {
+    /// Checks if the first responder is an NSTableView or a view within one
+    var isTableViewFocused: Bool {
+        guard let firstResponder = firstResponder else { return false }
+        if firstResponder is NSTableView { return true }
+        if let view = firstResponder as? NSView {
+            var superview = view.superview
+            while let current = superview {
+                if current is NSTableView { return true }
+                superview = current.superview
+            }
+        }
+        return false
+    }
+}
+
 /// Custom settings window that hosts the SwiftUI SettingsView
 class SettingsWindow: NSWindow {
     init() {
@@ -39,14 +55,20 @@ class SettingsWindow: NSWindow {
         self.isRestorable = false // Disable window restoration
     }
 
-    /// Override Cmd+Q to close window instead of quitting app
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        // Check if this is Cmd+Q
+        // Cmd+Q: Close window instead of quitting app
         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "q" {
-            // Just close the window, don't quit the app
             self.close()
             return true
         }
+
+        // Return/Enter: Consume when table view is focused to prevent system beep
+        let isReturnOrEnter = event.keyCode == 36 || event.keyCode == 76
+        let hasNoActionModifiers = event.modifierFlags.intersection([.command, .control, .option]).isEmpty
+        if isReturnOrEnter && hasNoActionModifiers && isTableViewFocused {
+            return true
+        }
+
         return super.performKeyEquivalent(with: event)
     }
 }
