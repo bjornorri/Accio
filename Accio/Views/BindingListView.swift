@@ -67,17 +67,8 @@ struct BindingListView: View {
             isSearchFocused = focused
         }
 
-        // Configure state callbacks
-        newCoordinator.checkHasSelection = { [self] in viewModel.hasSelection }
-        newCoordinator.checkHasSingleSelection = { [self] in viewModel.selection.count == 1 }
-        newCoordinator.checkHasFilter = { [self] in !viewModel.searchText.isEmpty }
-
         // Configure action callbacks
         newCoordinator.onAddItem = { [self] in addBinding() }
-        newCoordinator.onRemoveSelected = { [self] in viewModel.removeSelected() }
-        newCoordinator.onFocusSearch = { [self] in isSearchFocused = true }
-        newCoordinator.onActivateSelected = { [self] in viewModel.activateSelectedRecorder() }
-        newCoordinator.onClearFilter = { [self] in viewModel.searchText = "" }
 
         newCoordinator.start()
         coordinator = newCoordinator
@@ -181,6 +172,28 @@ struct BindingListView: View {
             .environment(\.defaultMinListRowHeight, 40)
             .searchable(text: $viewModel.searchText, placement: .toolbar)
             .searchFocused($isSearchFocused)
+            .listKeyHandler(
+                onDelete: {
+                    if viewModel.hasSelection {
+                        viewModel.removeSelected()
+                    }
+                },
+                onReturn: {
+                    if viewModel.selection.count == 1 {
+                        viewModel.activateSelectedRecorder()
+                    }
+                },
+                onSpace: {
+                    if viewModel.selection.count == 1 {
+                        viewModel.activateSelectedRecorder()
+                    }
+                },
+                onEscape: {
+                    if !viewModel.searchText.isEmpty {
+                        viewModel.searchText = ""
+                    }
+                }
+            )
             .onChange(of: isSearchFocused) { _, isFocused in
                 if !isFocused {
                     coordinator?.focusCoordinator.handleSearchFocusLost()
