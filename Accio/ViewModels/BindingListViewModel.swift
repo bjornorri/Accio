@@ -175,8 +175,6 @@ final class BindingListViewModel {
         guard newShortcut != savedPreviousShortcut else { return }
 
         if let conflict = bindingOrchestrator.findConflict(for: bindingID) {
-            KeyboardShortcuts.setShortcut(savedPreviousShortcut, for: editedName)
-
             let alert = NSAlert()
             alert.messageText = "Shortcut Already in Use"
             alert.informativeText = "This shortcut is already assigned to \(conflict.conflictingBinding.appName). Do you want to reassign it to \(conflict.editedBinding.appName)?"
@@ -190,7 +188,6 @@ final class BindingListViewModel {
                 let conflictingName = KeyboardShortcuts.Name(conflict.conflictingBinding.shortcutName)
                 let conflictingPreviousShortcut = KeyboardShortcuts.getShortcut(for: conflictingName)
 
-                KeyboardShortcuts.setShortcut(newShortcut, for: editedName)
                 bindingOrchestrator.clearShortcut(for: conflict.conflictingBinding.id)
 
                 undoManager.registerUndo { [self, binding, savedPreviousShortcut, conflict, conflictingPreviousShortcut] in
@@ -207,6 +204,9 @@ final class BindingListViewModel {
                     )
                 }
                 undoManager.setActionName("Record Shortcut")
+            } else {
+                // User cancelled - revert to previous shortcut
+                KeyboardShortcuts.setShortcut(savedPreviousShortcut, for: editedName)
             }
         } else {
             undoManager.registerUndo { [self, binding, savedPreviousShortcut, newShortcut] in
