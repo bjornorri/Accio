@@ -7,6 +7,7 @@ import Testing
 @testable import Accio
 
 @Suite
+@MainActor
 struct BindingListFocusCoordinatorTests {
 
     @Test func start_startsInternalObservers() {

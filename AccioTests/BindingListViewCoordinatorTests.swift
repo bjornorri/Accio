@@ -7,6 +7,7 @@ import Testing
 @testable import Accio
 
 @Suite
+@MainActor
 struct BindingListViewCoordinatorTests {
 
     // MARK: - Lifecycle Tests

@@ -9,6 +9,7 @@ import AppKit
 ///
 /// This class owns the keyboard handler and focus coordinator, implementing
 /// the keyboard handler delegate directly to avoid unnecessary indirection.
+@MainActor
 final class BindingListViewCoordinator: BindingListKeyboardHandlerDelegate {
     let focusCoordinator = BindingListFocusCoordinator()
     let keyboardHandler = BindingListKeyboardHandler()

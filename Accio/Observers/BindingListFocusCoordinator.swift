@@ -11,6 +11,7 @@ import AppKit
 /// - Window focus restoration when the app regains focus
 /// - List focus observation for auto-selecting items
 /// - Search field focus tracking and restoration
+@MainActor
 final class BindingListFocusCoordinator {
     private var windowFocusObserver: WindowFocusObserver?
     private var listFocusObserver: ListFocusObserver?
