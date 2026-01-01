@@ -132,6 +132,13 @@ extension NSTableView {
            handler.handleKeyDown(event) {
             return
         }
+
+        // Don't forward to original when inside a modal panel (e.g., NSOpenPanel)
+        // The panel handles escape at a higher level, and the table view would beep
+        if NSApp.modalWindow != nil {
+            return
+        }
+
         // Call original implementation (which is now swizzled to accio_keyDown)
         accio_keyDown(with: event)
     }
