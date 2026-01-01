@@ -10,6 +10,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Resolve packages
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project Accio.xcodeproj \
+            -scheme Accio
       - name: Build
         run: |
           xcodebuild build \
