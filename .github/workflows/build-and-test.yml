@@ -17,6 +17,7 @@ jobs:
             -scheme Accio \
             -configuration Release \
             -destination 'platform=macOS' \
+            -skipMacroValidation \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
@@ -27,6 +28,7 @@ jobs:
             -scheme Accio \
             -configuration Debug \
             -destination 'platform=macOS' \
+            -skipMacroValidation \
             -enableCodeCoverage YES \
             -resultBundlePath TestResults.xcresult \
             CODE_SIGN_IDENTITY="-" \
