@@ -99,4 +99,11 @@ extension Container {
         self { DefaultBindingUndoManager() }
             .singleton
     }
+
+    // MARK: - Binding Store
+
+    var bindingStore: Factory<BindingStore> {
+        self { DefaultsBindingStore() }
+            .singleton
+    }
 }

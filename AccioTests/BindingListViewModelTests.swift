@@ -3,7 +3,6 @@
 //  AccioTests
 //
 
-import Defaults
 import FactoryKit
 import FactoryTesting
 import Foundation
@@ -18,13 +17,14 @@ struct BindingListViewModelTests {
         with bindings: [HotkeyBinding] = []
     ) -> (BindingListViewModel, MockHotkeyManager, MockBindingOrchestrator, MockBindingUndoManager, MockAppMetadataProvider) {
         Container.shared.manager.reset(options: .all)
-        Defaults[.hotkeyBindings] = bindings
 
+        let mockBindingStore = MockBindingStore(bindings: bindings)
         let mockHotkeyManager = MockHotkeyManager()
         let mockOrchestrator = MockBindingOrchestrator()
         let mockUndoManager = MockBindingUndoManager()
         let mockMetadataProvider = MockAppMetadataProvider()
 
+        Container.shared.bindingStore.register { mockBindingStore }
         Container.shared.hotkeyManager.register { mockHotkeyManager }
         Container.shared.bindingOrchestrator.register { mockOrchestrator }
         Container.shared.bindingUndoManager.register { mockUndoManager }
@@ -59,8 +59,7 @@ struct BindingListViewModelTests {
             HotkeyBinding(shortcutName: "m", appBundleIdentifier: "com.m.App", appName: "Mango")
         ])
 
-        let names = viewModel.filteredBindings.map(\.appName)
-        #expect(names == ["Apple", "Mango", "Zebra"])
+        #expect(viewModel.filteredBindings.map(\.appName) == ["Apple", "Mango", "Zebra"])
     }
 
     @Test func filteredBindings_filtersWhenSearchTextIsSet() {
@@ -72,8 +71,7 @@ struct BindingListViewModelTests {
 
         viewModel.searchText = "fi"
 
-        let names = viewModel.filteredBindings.map(\.appName)
-        #expect(names == ["Finder"])
+        #expect(viewModel.filteredBindings.map(\.appName) == ["Finder"])
     }
 
     @Test func filteredBindings_isCaseInsensitive() {
@@ -84,8 +82,7 @@ struct BindingListViewModelTests {
 
         viewModel.searchText = "SAFARI"
 
-        let names = viewModel.filteredBindings.map(\.appName)
-        #expect(names == ["Safari"])
+        #expect(viewModel.filteredBindings.map(\.appName) == ["Safari"])
     }
 
     // MARK: - hasSelection Tests

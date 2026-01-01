@@ -5,7 +5,6 @@
 
 import AppKit
 import Combine
-import Defaults
 import FactoryKit
 import KeyboardShortcuts
 import SwiftUI
@@ -28,6 +27,9 @@ final class BindingListViewModel {
     @ObservationIgnored
     @Injected(\.bindingUndoManager) private var undoManager
 
+    @ObservationIgnored
+    @Injected(\.bindingStore) private var bindingStore
+
     // MARK: - Published State
 
     var selection: Set<HotkeyBinding.ID> = []
@@ -49,11 +51,11 @@ final class BindingListViewModel {
     private(set) var bindings: [HotkeyBinding] = []
 
     init() {
-        bindings = Defaults[.hotkeyBindings]
-        Defaults.publisher(.hotkeyBindings)
-            .sink { [weak self] change in
+        bindings = bindingStore.bindings
+        bindingStore.bindingsPublisher
+            .sink { [weak self] newBindings in
                 Task { @MainActor in
-                    self?.bindings = change.newValue
+                    self?.bindings = newBindings
                 }
             }
             .store(in: &cancellables)
@@ -61,7 +63,7 @@ final class BindingListViewModel {
 
     private func updateBindings(_ newBindings: [HotkeyBinding]) {
         bindings = newBindings
-        Defaults[.hotkeyBindings] = newBindings
+        bindingStore.bindings = newBindings
     }
 
     var isEmpty: Bool {
