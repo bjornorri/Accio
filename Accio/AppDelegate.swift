@@ -19,6 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Inject dependencies via Factory
     @Injected(\.windowManager) private var windowManager: WindowManager
     @Injected(\.bindingOrchestrator) private var bindingOrchestrator: BindingOrchestrator
+    @Injected(\.bindingStore) private var bindingStore: BindingStore
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set initial activation policy to accessory (hidden from dock/switcher)
@@ -33,6 +34,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         #if DEBUG
         // Always open settings window on launch in debug builds
         openSettings()
+        #else
+        // Open settings on first launch (no shortcuts configured yet)
+        if bindingStore.bindings.isEmpty {
+            openSettings()
+        }
         #endif
     }
 
