@@ -189,22 +189,26 @@ build_app() {
     fi
 
     # Build without code signing (we'll sign manually)
-    xcodebuild archive \
-        $PROJECT_ARG \
-        -scheme "$SCHEME_NAME" \
-        -configuration "$BUILD_CONFIG" \
-        -archivePath "$ARCHIVE_PATH" \
-        CODE_SIGN_IDENTITY="-" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO \
-        | xcpretty || xcodebuild archive \
-        $PROJECT_ARG \
-        -scheme "$SCHEME_NAME" \
-        -configuration "$BUILD_CONFIG" \
-        -archivePath "$ARCHIVE_PATH" \
-        CODE_SIGN_IDENTITY="-" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO
+    if command -v xcpretty &> /dev/null; then
+        xcodebuild archive \
+            $PROJECT_ARG \
+            -scheme "$SCHEME_NAME" \
+            -configuration "$BUILD_CONFIG" \
+            -archivePath "$ARCHIVE_PATH" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+    else
+        xcodebuild archive \
+            $PROJECT_ARG \
+            -scheme "$SCHEME_NAME" \
+            -configuration "$BUILD_CONFIG" \
+            -archivePath "$ARCHIVE_PATH" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+    fi
 
     echo "✓ App built successfully"
 }
