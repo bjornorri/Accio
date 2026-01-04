@@ -22,6 +22,9 @@ extension Defaults.Keys {
     /// App version when settings were last saved (for migration purposes)
     static let lastKnownAppVersion = Key<String?>("lastKnownAppVersion")
 
+    /// Build number when settings were last saved (for migration purposes)
+    static let lastKnownBuildNumber = Key<String?>("lastKnownBuildNumber")
+
     /// Global behavior settings for all hotkey bindings
     static let appBehaviorSettings = Key<AppBehaviorSettings>(
         "appBehaviorSettings",

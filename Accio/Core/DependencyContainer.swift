@@ -106,4 +106,17 @@ extension Container {
         self { DefaultsBindingStore() }
             .singleton
     }
+
+    // MARK: - App Info Provider
+
+    var appInfoProvider: Factory<AppInfoProvider> {
+        self { BundleAppInfoProvider() }
+    }
+
+    // MARK: - App Settings Store
+
+    var appSettingsStore: Factory<AppSettingsStore> {
+        self { DefaultsAppSettingsStore() }
+            .singleton
+    }
 }

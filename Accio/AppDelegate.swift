@@ -20,8 +20,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @Injected(\.windowManager) private var windowManager: WindowManager
     @Injected(\.bindingOrchestrator) private var bindingOrchestrator: BindingOrchestrator
     @Injected(\.bindingStore) private var bindingStore: BindingStore
+    @Injected(\.appInfoProvider) private var appInfoProvider: AppInfoProvider
+    @Injected(\.appSettingsStore) private var appSettingsStore: AppSettingsStore
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Save current app version and build number for migration purposes
+        appSettingsStore.lastKnownAppVersion = appInfoProvider.version
+        appSettingsStore.lastKnownBuildNumber = appInfoProvider.buildNumber
+
         // Set initial activation policy to accessory (hidden from dock/switcher)
         NSApp.setActivationPolicy(.accessory)
 
