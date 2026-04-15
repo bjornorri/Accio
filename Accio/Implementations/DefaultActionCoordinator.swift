@@ -60,7 +60,12 @@ final class DefaultActionCoordinator: ActionCoordinator {
         switch settings.whenFocused {
         case .cycleWindows:
             do {
-                try windowCycler.cycleWindows(for: bundleIdentifier)
+                if applicationManager.hasWindows(bundleIdentifier: bundleIdentifier) {
+                    try windowCycler.cycleWindows(for: bundleIdentifier)
+                } else {
+                    // Activate the application. This should create a new window for multi-window apps.
+                    try applicationManager.activate(bundleIdentifier: bundleIdentifier)
+                }
             } catch {
                 print("Failed to cycle windows: \(error)")
             }

@@ -33,4 +33,9 @@ protocol ApplicationManager {
     /// - Parameter bundleIdentifier: The bundle identifier of the app to hide
     /// - Throws: Error if the application cannot be hidden
     func hide(bundleIdentifier: String) throws
+
+    /// Check if an application has any open windows
+    /// - Parameter bundleIdentifier: The bundle identifier of the app to check
+    /// - Returns: True if the application has at least one open window
+    func hasWindows(bundleIdentifier: String) -> Bool
 }

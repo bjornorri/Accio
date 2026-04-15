@@ -17,11 +17,12 @@ struct DefaultActionCoordinatorTests {
 
     private func resetAndRegisterMocks(
         isRunning: Bool = false,
-        isFocused: Bool = false
+        isFocused: Bool = false,
+        hasWindows: Bool = true
     ) -> (MockApplicationManager, MockWindowCycler, MockNotificationPoster) {
         Container.shared.manager.reset(options: .all)
 
-        let mockAppManager = MockApplicationManager(isRunning: isRunning, isFocused: isFocused)
+        let mockAppManager = MockApplicationManager(isRunning: isRunning, isFocused: isFocused, hasWindows: hasWindows)
         let mockWindowCycler = MockWindowCycler()
         let mockNotificationPoster = MockNotificationPoster()
         let mockAppMetadataProvider = MockAppMetadataProvider()
@@ -128,8 +129,8 @@ struct DefaultActionCoordinatorTests {
 
     // MARK: - When Focused Tests
 
-    @Test func whenFocused_cycleWindows_cyclesWindows() async {
-        let (mockAppManager, mockWindowCycler, mockNotificationPoster) = resetAndRegisterMocks(isRunning: true, isFocused: true)
+    @Test func whenFocused_cycleWindows_withWindows_cyclesWindows() async {
+        let (mockAppManager, mockWindowCycler, mockNotificationPoster) = resetAndRegisterMocks(isRunning: true, isFocused: true, hasWindows: true)
 
         let coordinator = Container.shared.actionCoordinator()
         let settings = AppBehaviorSettings(
@@ -144,6 +145,22 @@ struct DefaultActionCoordinatorTests {
         #expect(mockAppManager.hideCalls.isEmpty)
         #expect(mockWindowCycler.cycleWindowsCalls == ["com.apple.Safari"])
         #expect(mockNotificationPoster.postCalls.isEmpty)
+    }
+
+    @Test func whenFocused_cycleWindows_withNoWindows_activatesApp() async {
+        let (mockAppManager, mockWindowCycler, _) = resetAndRegisterMocks(isRunning: true, isFocused: true, hasWindows: false)
+
+        let coordinator = Container.shared.actionCoordinator()
+        let settings = AppBehaviorSettings(
+            whenNotRunning: .launchApp,
+            whenNotFocused: .focusApp,
+            whenFocused: .cycleWindows
+        )
+
+        await coordinator.executeAction(for: "com.apple.Safari", settings: settings)
+
+        #expect(mockAppManager.activateCalls == ["com.apple.Safari"])
+        #expect(mockWindowCycler.cycleWindowsCalls.isEmpty)
     }
 
     @Test func whenFocused_hideApp_hidesTheApp() async {
@@ -188,14 +205,16 @@ struct DefaultActionCoordinatorTests {
 class MockApplicationManager: ApplicationManager {
     var isRunningValue: Bool
     var isFocusedValue: Bool
+    var hasWindowsValue: Bool
 
     var launchCalls: [String] = []
     var activateCalls: [String] = []
     var hideCalls: [String] = []
 
-    init(isRunning: Bool = false, isFocused: Bool = false) {
+    init(isRunning: Bool = false, isFocused: Bool = false, hasWindows: Bool = true) {
         self.isRunningValue = isRunning
         self.isFocusedValue = isFocused
+        self.hasWindowsValue = hasWindows
     }
 
     func launch(bundleIdentifier: String) async throws {
@@ -216,6 +235,10 @@ class MockApplicationManager: ApplicationManager {
 
     func hide(bundleIdentifier: String) throws {
         hideCalls.append(bundleIdentifier)
+    }
+
+    func hasWindows(bundleIdentifier: String) -> Bool {
+        return hasWindowsValue
     }
 }
 

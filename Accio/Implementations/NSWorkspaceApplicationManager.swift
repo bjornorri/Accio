@@ -79,5 +79,20 @@ final class NSWorkspaceApplicationManager: ApplicationManager {
             throw ApplicationManagerError.hideFailed(bundleIdentifier: bundleIdentifier)
         }
     }
+
+    func hasWindows(bundleIdentifier: String) -> Bool {
+        guard let app = workspace.runningApplications.first(where: { $0.bundleIdentifier == bundleIdentifier }) else {
+            return false
+        }
+        let pid = app.processIdentifier
+        guard let windowList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
+            return false
+        }
+        return windowList.contains { dict in
+            guard let windowPid = dict[kCGWindowOwnerPID as String] as? pid_t,
+                  let layer = dict[kCGWindowLayer as String] as? Int32 else { return false }
+            return windowPid == pid && layer == 0
+        }
+    }
 }
 
