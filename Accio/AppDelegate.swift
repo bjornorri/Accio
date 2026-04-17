@@ -55,7 +55,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem?.button {
             let image = NSImage(resource: .menuBarIcon)
             image.size = NSSize(width: 22, height: 22)
+            #if DEBUG
+            let tinted = NSImage(size: image.size, flipped: false) { rect in
+                image.draw(in: rect)
+                NSColor.systemOrange.set()
+                rect.fill(using: .sourceAtop)
+                return true
+            }
+            tinted.isTemplate = false
+            button.image = tinted
+            #else
             button.image = image
+            #endif
         }
 
         // Create menu
