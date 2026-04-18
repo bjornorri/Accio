@@ -40,8 +40,11 @@ jobs:
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
+      - name: Export coverage report
+        run: xcrun xccov view --report --json TestResults.xcresult > coverage.json
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.json
           fail_ci_if_error: false
