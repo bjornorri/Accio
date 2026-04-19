@@ -294,11 +294,11 @@ struct BindingListView: View {
             Button {
                 viewModel.addAppsToGroup(groupID: groupID)
             } label: {
-                Label("Add App...", systemImage: "plus")
+                Label("Add App", systemImage: "plus")
                     .foregroundStyle(.tint)
             }
             .buttonStyle(.plain)
-            .padding(.leading, 52)
+            .padding(.leading, 30)
             .padding(.vertical, 4)
             .selectionDisabled(true)
         }

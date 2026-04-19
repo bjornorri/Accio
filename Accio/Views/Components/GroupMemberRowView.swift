@@ -22,7 +22,7 @@ struct GroupMemberRowView: View {
         HStack(spacing: 10) {
             // Indent to align with group content
             Color.clear
-                .frame(width: 22)
+                .frame(width: 20)
 
             if let icon = appIcon {
                 Image(nsImage: icon)
@@ -57,7 +57,8 @@ struct GroupMemberRowView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .padding(.trailing, 4)
         }
-        .padding(.vertical, 3)
+        .padding(.vertical, 4)
     }
 }
