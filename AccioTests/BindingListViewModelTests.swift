@@ -412,6 +412,161 @@ struct BindingListViewModelTests {
         #expect(viewModel.expandedGroupIDs.isEmpty)
     }
 
+    // MARK: - addGroup Tests
+
+    @Test func addGroup_addsGroup() {
+        let (viewModel, _, _, _, _) = createViewModel()
+
+        viewModel.addGroup()
+
+        #expect(viewModel.groups.count == 1)
+    }
+
+    @Test func addGroup_setsSelectionToNewGroup() {
+        let (viewModel, _, _, _, _) = createViewModel()
+
+        viewModel.addGroup()
+
+        guard let group = viewModel.groups.first else {
+            Issue.record("Expected a group to be added"); return
+        }
+        #expect(viewModel.selection == ["group:\(group.id.uuidString)"])
+    }
+
+    @Test func addGroup_expandsNewGroup() {
+        let (viewModel, _, _, _, _) = createViewModel()
+
+        viewModel.addGroup()
+
+        guard let group = viewModel.groups.first else {
+            Issue.record("Expected a group to be added"); return
+        }
+        #expect(viewModel.expandedGroupIDs.contains(group.id))
+    }
+
+    @Test func addGroup_beginsRenaming() {
+        let (viewModel, _, _, _, _) = createViewModel()
+
+        viewModel.addGroup()
+
+        #expect(viewModel.renamingGroupID == viewModel.groups.first?.id)
+        #expect(viewModel.pendingGroupName == "New Group")
+    }
+
+    @Test func addGroup_registersUndo() {
+        let (viewModel, _, _, mockUndoManager, _) = createViewModel()
+
+        viewModel.addGroup()
+
+        #expect(mockUndoManager.canUndo == true)
+        #expect(mockUndoManager.actionNames.contains("Add Group"))
+    }
+
+    // MARK: - Rename Group Tests
+
+    @Test func beginRename_setsRenamingGroupID() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+
+        viewModel.beginRename(for: group.id)
+
+        #expect(viewModel.renamingGroupID == group.id)
+    }
+
+    @Test func beginRename_setsPendingGroupName() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+
+        viewModel.beginRename(for: group.id)
+
+        #expect(viewModel.pendingGroupName == "Work")
+    }
+
+    @Test func beginRename_doesNothingForUnknownID() {
+        let (viewModel, _, _, _, _) = createViewModel()
+
+        viewModel.beginRename(for: UUID())
+
+        #expect(viewModel.renamingGroupID == nil)
+    }
+
+    @Test func confirmRename_updatesGroupName() {
+        let group = AppGroup(name: "Old Name")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.beginRename(for: group.id)
+        viewModel.pendingGroupName = "New Name"
+
+        viewModel.confirmRename()
+
+        #expect(viewModel.groups.first?.name == "New Name")
+    }
+
+    @Test func confirmRename_clearsRenamingGroupID() {
+        let group = AppGroup(name: "Old Name")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.beginRename(for: group.id)
+        viewModel.pendingGroupName = "New Name"
+
+        viewModel.confirmRename()
+
+        #expect(viewModel.renamingGroupID == nil)
+    }
+
+    @Test func confirmRename_doesNotRenameWhenNameUnchanged() {
+        let group = AppGroup(name: "Same Name")
+        let (viewModel, _, _, mockUndoManager, _) = createViewModel(groups: [group])
+        viewModel.beginRename(for: group.id)
+
+        viewModel.confirmRename()
+
+        #expect(viewModel.groups.first?.name == "Same Name")
+        #expect(!mockUndoManager.actionNames.contains("Rename Group"))
+    }
+
+    @Test func confirmRename_doesNotRenameWhenNameIsBlank() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.beginRename(for: group.id)
+        viewModel.pendingGroupName = "   "
+
+        viewModel.confirmRename()
+
+        #expect(viewModel.groups.first?.name == "Work")
+    }
+
+    @Test func confirmRename_registersUndo() {
+        let group = AppGroup(name: "Old Name")
+        let (viewModel, _, _, mockUndoManager, _) = createViewModel(groups: [group])
+        viewModel.beginRename(for: group.id)
+        viewModel.pendingGroupName = "New Name"
+
+        viewModel.confirmRename()
+
+        #expect(mockUndoManager.canUndo == true)
+        #expect(mockUndoManager.actionNames.contains("Rename Group"))
+    }
+
+    @Test func cancelRename_clearsRenamingGroupID() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.beginRename(for: group.id)
+
+        viewModel.cancelRename()
+
+        #expect(viewModel.renamingGroupID == nil)
+    }
+
+    @Test func cancelRename_doesNotChangeGroupName() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.beginRename(for: group.id)
+        viewModel.pendingGroupName = "New Name"
+
+        viewModel.cancelRename()
+
+        #expect(viewModel.groups.first?.name == "Work")
+    }
+
     // MARK: - refreshMetadata Tests
 
     @Test func refreshMetadata_updatesAppNames() {

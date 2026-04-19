@@ -180,23 +180,29 @@ struct BindingListView: View {
             .searchFocused($isSearchFocused)
             .listKeyHandler(
                 onDelete: {
+                    guard viewModel.renamingGroupID == nil else { return }
                     if viewModel.hasSelection { viewModel.removeSelected() }
                 },
                 onReturn: {
+                    guard viewModel.renamingGroupID == nil else { return }
                     if viewModel.selection.count == 1 { viewModel.activateSelectedRecorder() }
                 },
                 onSpace: {
+                    guard viewModel.renamingGroupID == nil else { return }
                     if viewModel.selection.count == 1 { viewModel.activateSelectedRecorder() }
                 },
                 onEscape: {
+                    guard viewModel.renamingGroupID == nil else { return }
                     if !viewModel.searchText.isEmpty { viewModel.searchText = "" }
                 }
             )
             .onKeyPress(.leftArrow) {
+                guard viewModel.renamingGroupID == nil else { return .ignored }
                 viewModel.collapseSelectedGroup()
                 return .handled
             }
             .onKeyPress(.rightArrow) {
+                guard viewModel.renamingGroupID == nil else { return .ignored }
                 viewModel.expandSelectedGroup()
                 return .handled
             }
