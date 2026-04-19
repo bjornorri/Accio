@@ -204,15 +204,15 @@ struct BindingListView: View {
                     coordinator?.focusCoordinator.focusList()
                 }
             )
-            .tag(binding.id)
+            .tag("binding:\(binding.id.uuidString)")
             .contextMenu {
                 Button("Record Shortcut") {
-                    viewModel.selection = [binding.id]
+                    viewModel.selection = ["binding:\(binding.id.uuidString)"]
                     viewModel.activateRecorder(for: binding.id)
                 }
                 Divider()
                 Button("Remove", role: .destructive) {
-                    viewModel.selection = [binding.id]
+                    viewModel.selection = ["binding:\(binding.id.uuidString)"]
                     viewModel.removeSelected()
                 }
             }
@@ -236,19 +236,19 @@ struct BindingListView: View {
                     coordinator?.focusCoordinator.focusList()
                 }
             )
-            .tag(group.id)
+            .tag("group:\(group.id.uuidString)")
             .contextMenu {
                 Button("Record Shortcut") {
-                    viewModel.selection = [group.id]
+                    viewModel.selection = ["group:\(group.id.uuidString)"]
                     viewModel.activateRecorder(for: group.id)
                 }
                 Button("Rename") {
-                    viewModel.selection = [group.id]
+                    viewModel.selection = ["group:\(group.id.uuidString)"]
                     viewModel.beginRename(for: group.id)
                 }
                 Divider()
                 Button("Remove", role: .destructive) {
-                    viewModel.selection = [group.id]
+                    viewModel.selection = ["group:\(group.id.uuidString)"]
                     viewModel.removeSelected()
                 }
             }
@@ -261,7 +261,6 @@ struct BindingListView: View {
                 showMostRecentLabel: showMostRecentLabel,
                 onRemove: { viewModel.removeAppFromGroup(bundleIdentifier: member.bundleIdentifier, groupID: groupID) }
             )
-            .selectionDisabled(true)
 
         case .addAppToGroup(let groupID):
             Button {

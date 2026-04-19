@@ -3,8 +3,41 @@
 //  Accio
 //
 
+import AppKit
 import KeyboardShortcuts
 import SwiftUI
+
+/// A transparent overlay that detects double-clicks at the AppKit level while letting
+/// all events propagate up the responder chain so List row selection still works.
+private struct DoubleClickOverlay: NSViewRepresentable {
+    var onDoubleClick: () -> Void
+
+    func makeNSView(context: Context) -> DoubleClickNSView {
+        DoubleClickNSView(onDoubleClick: onDoubleClick)
+    }
+
+    func updateNSView(_ nsView: DoubleClickNSView, context: Context) {
+        nsView.onDoubleClick = onDoubleClick
+    }
+
+    final class DoubleClickNSView: NSView {
+        var onDoubleClick: () -> Void
+
+        init(onDoubleClick: @escaping () -> Void) {
+            self.onDoubleClick = onDoubleClick
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { fatalError() }
+
+        override func mouseDown(with event: NSEvent) {
+            if event.clickCount == 2 {
+                onDoubleClick()
+            }
+            super.mouseDown(with: event)
+        }
+    }
+}
 
 /// A row displaying an app group's icons, name, and shortcut recorder
 struct AppGroupRowView: View {
@@ -65,10 +98,9 @@ struct AppGroupRowView: View {
                 }
                 Spacer()
             }
-            .contentShape(Rectangle())
-            .onTapGesture(count: 2) {
+            .overlay(DoubleClickOverlay {
                 if !isRenaming { onBeginRename() }
-            }
+            })
 
             ShortcutRecorder(
                 name: shortcutName,

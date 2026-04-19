@@ -101,7 +101,7 @@ struct BindingListViewModelTests {
         let (viewModel, _, _, _, _) = createViewModel(with: [
             HotkeyBinding(id: id, shortcutName: "test", appBundleIdentifier: "com.test", appName: "Test")
         ])
-        viewModel.selection = [id]
+        viewModel.selection = ["binding:\(id.uuidString)"]
 
         #expect(viewModel.hasSelection == true)
     }
@@ -118,7 +118,7 @@ struct BindingListViewModelTests {
 
         viewModel.handleListFocused()
 
-        #expect(viewModel.selection == [id1])
+        #expect(viewModel.selection == ["binding:\(id1.uuidString)"])
     }
 
     @Test func handleListFocused_keepsValidSelection() {
@@ -128,24 +128,23 @@ struct BindingListViewModelTests {
             HotkeyBinding(id: id1, shortcutName: "a", appBundleIdentifier: "com.a", appName: "Apple"),
             HotkeyBinding(id: id2, shortcutName: "z", appBundleIdentifier: "com.z", appName: "Zebra")
         ])
-        viewModel.selection = [id2]
+        viewModel.selection = ["binding:\(id2.uuidString)"]
 
         viewModel.handleListFocused()
 
-        #expect(viewModel.selection == [id2])
+        #expect(viewModel.selection == ["binding:\(id2.uuidString)"])
     }
 
     @Test func handleListFocused_clearsInvalidSelection() {
         let id1 = UUID()
-        let invalidId = UUID()
         let (viewModel, _, _, _, _) = createViewModel(with: [
             HotkeyBinding(id: id1, shortcutName: "a", appBundleIdentifier: "com.a", appName: "Apple")
         ])
-        viewModel.selection = [invalidId]
+        viewModel.selection = ["binding:\(UUID().uuidString)"]
 
         viewModel.handleListFocused()
 
-        #expect(viewModel.selection == [id1])
+        #expect(viewModel.selection == ["binding:\(id1.uuidString)"])
     }
 
     // MARK: - activateSelectedRecorder Tests
@@ -155,7 +154,7 @@ struct BindingListViewModelTests {
         let (viewModel, _, _, _, _) = createViewModel(with: [
             HotkeyBinding(id: id, shortcutName: "test", appBundleIdentifier: "com.test", appName: "Test")
         ])
-        viewModel.selection = [id]
+        viewModel.selection = ["binding:\(id.uuidString)"]
 
         viewModel.activateSelectedRecorder()
 
@@ -169,7 +168,7 @@ struct BindingListViewModelTests {
             HotkeyBinding(id: id1, shortcutName: "a", appBundleIdentifier: "com.a", appName: "A"),
             HotkeyBinding(id: id2, shortcutName: "b", appBundleIdentifier: "com.b", appName: "B")
         ])
-        viewModel.selection = [id1, id2]
+        viewModel.selection = ["binding:\(id1.uuidString)", "binding:\(id2.uuidString)"]
 
         viewModel.activateSelectedRecorder()
 
@@ -202,7 +201,7 @@ struct BindingListViewModelTests {
 
         viewModel.onRecorderActivated(for: binding)
 
-        #expect(viewModel.selection == [id])
+        #expect(viewModel.selection == ["binding:\(id.uuidString)"])
     }
 
     // MARK: - onRecorderDeactivated Tests
@@ -226,7 +225,7 @@ struct BindingListViewModelTests {
             HotkeyBinding(id: id1, shortcutName: "a", appBundleIdentifier: "com.a", appName: "Apple"),
             HotkeyBinding(id: id2, shortcutName: "z", appBundleIdentifier: "com.z", appName: "Zebra")
         ])
-        viewModel.selection = [id1]
+        viewModel.selection = ["binding:\(id1.uuidString)"]
 
         viewModel.removeSelected()
 
@@ -243,11 +242,11 @@ struct BindingListViewModelTests {
             HotkeyBinding(id: id2, shortcutName: "m", appBundleIdentifier: "com.m", appName: "Mango"),
             HotkeyBinding(id: id3, shortcutName: "z", appBundleIdentifier: "com.z", appName: "Zebra")
         ])
-        viewModel.selection = [id2]
+        viewModel.selection = ["binding:\(id2.uuidString)"]
 
         viewModel.removeSelected()
 
-        #expect(viewModel.selection == [id3])
+        #expect(viewModel.selection == ["binding:\(id3.uuidString)"])
     }
 
     @Test func removeSelected_selectsPreviousItemWhenRemovingLast() {
@@ -257,11 +256,11 @@ struct BindingListViewModelTests {
             HotkeyBinding(id: id1, shortcutName: "a", appBundleIdentifier: "com.a", appName: "Apple"),
             HotkeyBinding(id: id2, shortcutName: "z", appBundleIdentifier: "com.z", appName: "Zebra")
         ])
-        viewModel.selection = [id2]
+        viewModel.selection = ["binding:\(id2.uuidString)"]
 
         viewModel.removeSelected()
 
-        #expect(viewModel.selection == [id1])
+        #expect(viewModel.selection == ["binding:\(id1.uuidString)"])
     }
 
     @Test func removeSelected_registersUndo() {
@@ -269,7 +268,7 @@ struct BindingListViewModelTests {
         let (viewModel, _, _, mockUndoManager, _) = createViewModel(with: [
             HotkeyBinding(id: id, shortcutName: "test", appBundleIdentifier: "com.test", appName: "Test App")
         ])
-        viewModel.selection = [id]
+        viewModel.selection = ["binding:\(id.uuidString)"]
 
         viewModel.removeSelected()
 

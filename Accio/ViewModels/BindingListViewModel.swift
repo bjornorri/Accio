@@ -56,7 +56,7 @@ final class BindingListViewModel {
 
     // MARK: - Published State
 
-    var selection: Set<UUID> = []
+    var selection: Set<String> = []
     var searchText = ""
     var scrollToID: String?
     var activeRecorderID: UUID?
@@ -244,22 +244,18 @@ final class BindingListViewModel {
     // MARK: - Selection
 
     func handleListFocused() {
-        let visibleIDs = Set(filteredItems.compactMap { item -> UUID? in
-            switch item {
-            case .binding(let b): return b.id
-            case .group(let g): return g.id
-            default: return nil
-            }
+        let selectableIDs = Set(filteredItems.compactMap { item -> String? in
+            if case .addAppToGroup = item { return nil }
+            return item.id
         })
-        let validSelection = selection.intersection(visibleIDs)
+        let validSelection = selection.intersection(selectableIDs)
 
-        if validSelection.isEmpty, let firstID = filteredItems.first.flatMap({ item -> UUID? in
-            switch item {
-            case .binding(let b): return b.id
-            case .group(let g): return g.id
-            default: return nil
+        if validSelection.isEmpty, let firstID = filteredItems.first(where: {
+            switch $0 {
+            case .binding, .group: return true
+            default: return false
             }
-        }) {
+        })?.id {
             selection = [firstID]
         } else if validSelection != selection {
             selection = validSelection
@@ -280,7 +276,16 @@ final class BindingListViewModel {
 
     func activateSelectedRecorder() {
         guard let selectedID = selection.first, selection.count == 1 else { return }
-        activateRecorder(for: selectedID)
+        let uuid: UUID?
+        if selectedID.hasPrefix("binding:") {
+            uuid = UUID(uuidString: String(selectedID.dropFirst("binding:".count)))
+        } else if selectedID.hasPrefix("group:") {
+            uuid = UUID(uuidString: String(selectedID.dropFirst("group:".count)))
+        } else {
+            uuid = nil
+        }
+        guard let id = uuid else { return }
+        activateRecorder(for: id)
     }
 
     func activateRecorder(for itemID: UUID) {
@@ -292,14 +297,14 @@ final class BindingListViewModel {
 
     func onRecorderActivated(for binding: HotkeyBinding) {
         hotkeyManager.pauseAll()
-        selection = [binding.id]
+        selection = ["binding:\(binding.id.uuidString)"]
         recordingTarget = .binding(binding)
         previousShortcut = KeyboardShortcuts.getShortcut(for: .init(binding.shortcutName))
     }
 
     func onGroupRecorderActivated(for group: AppGroup) {
         hotkeyManager.pauseAll()
-        selection = [group.id]
+        selection = ["group:\(group.id.uuidString)"]
         recordingTarget = .group(group)
         previousShortcut = KeyboardShortcuts.getShortcut(for: .init(group.shortcutName))
     }
@@ -420,7 +425,7 @@ final class BindingListViewModel {
             appName: appName
         )
         updateBindings(bindings + [newBinding])
-        selection = [id]
+        selection = ["binding:\(id.uuidString)"]
         scrollToID = "binding:\(id.uuidString)"
 
         undoManager.registerUndo { [self, newBinding] in
@@ -474,7 +479,7 @@ final class BindingListViewModel {
         updateBindings(bindings + newBindings)
 
         if let first = newBindings.first {
-            selection = [first.id]
+            selection = ["binding:\(first.id.uuidString)"]
             scrollToID = "binding:\(first.id.uuidString)"
         }
 
@@ -496,7 +501,7 @@ final class BindingListViewModel {
         let newGroup = AppGroup(id: id, name: "New Group")
         updateGroups(groups + [newGroup])
 
-        selection = [id]
+        selection = ["group:\(id.uuidString)"]
         expandedGroupIDs.insert(id)
         scrollToID = "group:\(id.uuidString)"
         beginRename(for: id)
@@ -664,34 +669,42 @@ final class BindingListViewModel {
     func removeSelected() {
         guard !selection.isEmpty else { return }
 
-        let selectedBindings = bindings.filter { selection.contains($0.id) }
-        let selectedGroups = groups.filter { selection.contains($0.id) }
+        let selectedBindings = bindings.filter { selection.contains("binding:\($0.id.uuidString)") }
+        let selectedGroups = groups.filter { selection.contains("group:\($0.id.uuidString)") }
 
-        guard !selectedBindings.isEmpty || !selectedGroups.isEmpty else { return }
+        // Parse selected group members: "member:{groupID}:{bundleID}"
+        // Skip members whose parent group is also being deleted
+        let selectedGroupIDs = Set(selectedGroups.map(\.id))
+        struct SelectedMember { let member: AppGroupMember; let groupID: AppGroup.ID; let originalIndex: Int }
+        var selectedMembers: [SelectedMember] = []
+        for selID in selection {
+            guard selID.hasPrefix("member:") else { continue }
+            let rest = String(selID.dropFirst("member:".count))
+            guard let colonIdx = rest.firstIndex(of: ":"),
+                  let groupID = UUID(uuidString: String(rest[rest.startIndex..<colonIdx])) else { continue }
+            guard !selectedGroupIDs.contains(groupID) else { continue }
+            let bundleID = String(rest[rest.index(after: colonIdx)...])
+            guard let gi = groups.firstIndex(where: { $0.id == groupID }),
+                  let mi = groups[gi].members.firstIndex(where: { $0.bundleIdentifier == bundleID }) else { continue }
+            selectedMembers.append(SelectedMember(member: groups[gi].members[mi], groupID: groupID, originalIndex: mi))
+        }
 
-        // Compute next selection from the sorted visible items
-        let sortedVisible = filteredItems.compactMap { item -> UUID? in
+        guard !selectedBindings.isEmpty || !selectedGroups.isEmpty || !selectedMembers.isEmpty else { return }
+
+        // Compute next selection from binding/group rows only
+        let allVisible = filteredItems.compactMap { item -> String? in
             switch item {
-            case .binding(let b) where !selection.contains(b.id): return nil
-            case .group(let g) where !selection.contains(g.id): return nil
-            case .binding(let b): return b.id
-            case .group(let g): return g.id
+            case .binding, .group: return item.id
             default: return nil
             }
         }
-        let allVisible = filteredItems.compactMap { item -> UUID? in
-            switch item {
-            case .binding(let b): return b.id
-            case .group(let g): return g.id
-            default: return nil
-            }
-        }
-        let nextSelectionID: UUID? = {
-            guard let lastSelected = sortedVisible.last,
+        let sortedSelected = allVisible.filter { selection.contains($0) }
+        let nextSelectionID: String? = {
+            guard let lastSelected = sortedSelected.last,
                   let lastIndex = allVisible.firstIndex(of: lastSelected) else { return nil }
             let nextIndex = lastIndex + 1
             if nextIndex < allVisible.count { return allVisible[nextIndex] }
-            if let firstSelected = sortedVisible.first,
+            if let firstSelected = sortedSelected.first,
                let firstIndex = allVisible.firstIndex(of: firstSelected),
                firstIndex > 0 { return allVisible[firstIndex - 1] }
             return nil
@@ -714,29 +727,47 @@ final class BindingListViewModel {
             KeyboardShortcuts.setShortcut(nil, for: .init(group.shortcutName))
         }
 
-        updateBindings(bindings.filter { !selection.contains($0.id) })
-        updateGroups(groups.filter { !selection.contains($0.id) })
-        expandedGroupIDs.subtract(Set(selectedGroups.map(\.id)))
+        // Remove group members from their groups (without triggering individual undos)
+        if !selectedMembers.isEmpty {
+            var updatedGroups = groups
+            for m in selectedMembers {
+                guard let gi = updatedGroups.firstIndex(where: { $0.id == m.groupID }) else { continue }
+                updatedGroups[gi].members.removeAll { $0.bundleIdentifier == m.member.bundleIdentifier }
+            }
+            groups = updatedGroups
+            groupStore.groups = updatedGroups
+        }
+
+        updateBindings(bindings.filter { !selection.contains("binding:\($0.id.uuidString)") })
+        updateGroups(groups.filter { !selection.contains("group:\($0.id.uuidString)") })
+        expandedGroupIDs.subtract(selectedGroupIDs)
 
         if let nextID = nextSelectionID {
             selection = [nextID]
+        } else if !selectedMembers.isEmpty, let groupID = selectedMembers.first?.groupID,
+                  groups.contains(where: { $0.id == groupID }) {
+            selection = ["group:\(groupID.uuidString)"]
         } else {
             selection = []
         }
 
-        let totalCount = selectedBindings.count + selectedGroups.count
+        let totalCount = selectedBindings.count + selectedGroups.count + selectedMembers.count
         let actionName: String
         if totalCount == 1 {
             if let b = selectedBindings.first { actionName = "Remove \(b.appName)" }
             else if let g = selectedGroups.first { actionName = "Remove \(g.name)" }
+            else if let m = selectedMembers.first { actionName = "Remove \(m.member.appName)" }
             else { actionName = "Remove" }
         } else {
             actionName = "Remove \(totalCount) Items"
         }
 
-        undoManager.registerUndo { [self, selectedBindings, savedBindingShortcuts, selectedGroups, savedGroupShortcuts] in
+        undoManager.registerUndo { [self, selectedBindings, savedBindingShortcuts, selectedGroups, savedGroupShortcuts, selectedMembers] in
             addBindingsInternal(selectedBindings, shortcuts: savedBindingShortcuts)
             addGroupsInternal(selectedGroups, shortcuts: savedGroupShortcuts)
+            for m in selectedMembers.sorted(by: { $0.originalIndex < $1.originalIndex }) {
+                insertMemberInGroupInternal(groupID: m.groupID, member: m.member, at: m.originalIndex)
+            }
         }
         undoManager.setActionName(actionName)
     }
@@ -749,7 +780,8 @@ final class BindingListViewModel {
         }
 
         updateBindings(bindings.filter { !idsToRemove.contains($0.id) })
-        selection = selection.subtracting(idsToRemove)
+        selection = selection.subtracting(idsToRemove.map { "binding:\($0.uuidString)" })
+
 
         let actionName = bindingsToRemove.count == 1
             ? "Remove \(bindingsToRemove[0].appName)"
@@ -775,7 +807,7 @@ final class BindingListViewModel {
         }
 
         if let first = bindingsToAdd.first {
-            selection = [first.id]
+            selection = ["binding:\(first.id.uuidString)"]
             scrollToID = "binding:\(first.id.uuidString)"
         }
 
@@ -796,7 +828,7 @@ final class BindingListViewModel {
         }
 
         updateGroups(groups.filter { !idsToRemove.contains($0.id) })
-        selection = selection.subtracting(idsToRemove)
+        selection = selection.subtracting(idsToRemove.map { "group:\($0.uuidString)" })
         expandedGroupIDs.subtract(idsToRemove)
 
         let actionName = groupsToRemove.count == 1
@@ -823,7 +855,7 @@ final class BindingListViewModel {
         }
 
         if let first = groupsToAdd.first {
-            selection = [first.id]
+            selection = ["group:\(first.id.uuidString)"]
             scrollToID = "group:\(first.id.uuidString)"
         }
 
