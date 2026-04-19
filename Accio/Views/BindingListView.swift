@@ -98,8 +98,8 @@ struct BindingListView: View {
             Text("Press \(Image(systemName: "command"))N to add an application shortcut\nor drag apps here")
         } actions: {
             Menu {
-                Button("Add App Shortcut") { addBinding() }
-                Button("Add App Group") { addGroup() }
+                Button("Add App") { addBinding() }
+                Button("Add Group") { addGroup() }
             } label: {
                 Text("Add Shortcut")
             }
@@ -113,8 +113,8 @@ struct BindingListView: View {
     private var listToolbar: some View {
         HStack(spacing: 0) {
             Menu {
-                Button("Add App Shortcut") { addBinding() }
-                Button("Add App Group") { addGroup() }
+                Button("Add App") { addBinding() }
+                Button("Add Group") { addGroup() }
             } label: {
                 Image(systemName: "plus")
                     .frame(width: 26, height: 22)
@@ -148,7 +148,7 @@ struct BindingListView: View {
         return ScrollViewReader { proxy in
             List(selection: $vm.selection) {
                 if showSections {
-                    Section("App Groups") {
+                    Section("App Group Shortcuts") {
                         ForEach(viewModel.filteredGroupItems) { item in
                             itemView(for: item)
                                 .id(item.id)
