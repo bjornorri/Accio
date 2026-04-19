@@ -62,20 +62,22 @@ struct AppGroupRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 0) {
             Button {
                 onToggleExpanded()
             } label: {
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                     .font(.caption2)
                     .fontWeight(.semibold)
-                    .frame(width: 10)
                     .foregroundStyle(.secondary)
+                    .frame(width: 20, height: 32)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
             groupIconView
                 .frame(width: 32, height: 32)
+                .padding(.leading, 4)
 
             // Name area — double-click to rename
             HStack(spacing: 0) {
@@ -98,6 +100,7 @@ struct AppGroupRowView: View {
                 }
                 Spacer()
             }
+            .padding(.leading, 10)
             .overlay(DoubleClickOverlay {
                 if !isRenaming { onBeginRename() }
             })
