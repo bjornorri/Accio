@@ -144,13 +144,33 @@ struct BindingListView: View {
 
     private var bindingsList: some View {
         @Bindable var vm = viewModel
+        let showSections = !viewModel.filteredBindingItems.isEmpty && !viewModel.filteredGroupItems.isEmpty
         return ScrollViewReader { proxy in
             List(selection: $vm.selection) {
-                ForEach(viewModel.filteredItems) { item in
-                    itemView(for: item)
-                        .id(item.id)
-                        .onAppear { visibleItemIDs.insert(item.id) }
-                        .onDisappear { visibleItemIDs.remove(item.id) }
+                if showSections {
+                    Section("App Groups") {
+                        ForEach(viewModel.filteredGroupItems) { item in
+                            itemView(for: item)
+                                .id(item.id)
+                                .onAppear { visibleItemIDs.insert(item.id) }
+                                .onDisappear { visibleItemIDs.remove(item.id) }
+                        }
+                    }
+                    Section("App Shortcuts") {
+                        ForEach(viewModel.filteredBindingItems) { item in
+                            itemView(for: item)
+                                .id(item.id)
+                                .onAppear { visibleItemIDs.insert(item.id) }
+                                .onDisappear { visibleItemIDs.remove(item.id) }
+                        }
+                    }
+                } else {
+                    ForEach(viewModel.filteredItems) { item in
+                        itemView(for: item)
+                            .id(item.id)
+                            .onAppear { visibleItemIDs.insert(item.id) }
+                            .onDisappear { visibleItemIDs.remove(item.id) }
+                    }
                 }
             }
             .listStyle(.inset)

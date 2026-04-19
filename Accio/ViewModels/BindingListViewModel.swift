@@ -136,27 +136,22 @@ final class BindingListViewModel {
 
     // MARK: - Filtered Items
 
-    var filteredItems: [BindingListItem] {
-        var combined: [(name: String, item: BindingListItem)] = []
+    var filteredBindingItems: [BindingListItem] {
+        bindings
+            .filter { searchText.isEmpty || $0.appName.localizedCaseInsensitiveContains(searchText) }
+            .sorted { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+            .map { .binding($0) }
+    }
 
-        for binding in bindings {
-            if searchText.isEmpty || binding.appName.localizedCaseInsensitiveContains(searchText) {
-                combined.append((binding.appName, .binding(binding)))
-            }
-        }
-
-        for group in groups {
-            if searchText.isEmpty || group.name.localizedCaseInsensitiveContains(searchText) {
-                combined.append((group.name, .group(group)))
-            }
-        }
-
-        combined.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    var filteredGroupItems: [BindingListItem] {
+        let matchingGroups = groups
+            .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
 
         var result: [BindingListItem] = []
-        for (_, item) in combined {
-            result.append(item)
-            if case .group(let group) = item, expandedGroupIDs.contains(group.id) {
+        for group in matchingGroups {
+            result.append(.group(group))
+            if expandedGroupIDs.contains(group.id) {
                 for (index, member) in group.members.enumerated() {
                     let showLabel = index == 0 && group.members.count > 1
                     result.append(.groupMember(member, groupID: group.id, showMostRecentLabel: showLabel))
@@ -167,9 +162,13 @@ final class BindingListViewModel {
         return result
     }
 
+    var filteredItems: [BindingListItem] {
+        filteredBindingItems + filteredGroupItems
+    }
+
     /// Binding-only filtered list — preserved for backwards compatibility
     var filteredBindings: [HotkeyBinding] {
-        filteredItems.compactMap {
+        filteredBindingItems.compactMap {
             if case .binding(let b) = $0 { return b }
             return nil
         }
