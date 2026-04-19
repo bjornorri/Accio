@@ -67,7 +67,8 @@ struct ListKeyHandler: NSViewRepresentable {
         }
 
         func handleKeyDown(_ event: NSEvent) -> Bool {
-            let hasNoModifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty
+            let relevantModifiers: NSEvent.ModifierFlags = [.command, .shift, .option, .control]
+            let hasNoModifiers = event.modifierFlags.intersection(relevantModifiers).isEmpty
             guard hasNoModifiers else { return false }
 
             switch event.keyCode {

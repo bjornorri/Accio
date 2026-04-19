@@ -271,6 +271,28 @@ final class BindingListViewModel {
         }
     }
 
+    func collapseSelectedGroup() {
+        guard let selectedID = selection.first, selection.count == 1 else { return }
+        if selectedID.hasPrefix("group:"),
+           let uuid = UUID(uuidString: String(selectedID.dropFirst("group:".count))) {
+            expandedGroupIDs.remove(uuid)
+        } else if selectedID.hasPrefix("member:") {
+            // Select the parent group row
+            let rest = String(selectedID.dropFirst("member:".count))
+            if let groupUUIDString = rest.split(separator: ":", maxSplits: 1).first,
+               let uuid = UUID(uuidString: String(groupUUIDString)) {
+                selection = ["group:\(uuid.uuidString)"]
+            }
+        }
+    }
+
+    func expandSelectedGroup() {
+        guard let selectedID = selection.first, selection.count == 1,
+              selectedID.hasPrefix("group:"),
+              let uuid = UUID(uuidString: String(selectedID.dropFirst("group:".count))) else { return }
+        expandedGroupIDs.insert(uuid)
+    }
+
     // MARK: - Recorder
 
     func activateSelectedRecorder() {

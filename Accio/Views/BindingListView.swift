@@ -192,6 +192,14 @@ struct BindingListView: View {
                     if !viewModel.searchText.isEmpty { viewModel.searchText = "" }
                 }
             )
+            .onKeyPress(.leftArrow) {
+                viewModel.collapseSelectedGroup()
+                return .handled
+            }
+            .onKeyPress(.rightArrow) {
+                viewModel.expandSelectedGroup()
+                return .handled
+            }
             .onChange(of: isSearchFocused) { _, isFocused in
                 if !isFocused { coordinator?.focusCoordinator.handleSearchFocusLost() }
             }
