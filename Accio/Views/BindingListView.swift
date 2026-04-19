@@ -329,9 +329,6 @@ struct BindingListView: View {
 
     private func addGroup() {
         viewModel.addGroup()
-        DispatchQueue.main.async {
-            coordinator?.focusCoordinator.focusList()
-        }
     }
 }
 
