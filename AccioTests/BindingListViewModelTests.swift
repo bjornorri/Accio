@@ -315,6 +315,103 @@ struct BindingListViewModelTests {
         #expect(viewModel.isUndoEnabled == true)
     }
 
+    // MARK: - Expand/Collapse Tests
+
+    @Test func toggleExpanded_expandsCollapsedGroup() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+
+        viewModel.toggleExpanded(group.id)
+
+        #expect(viewModel.expandedGroupIDs.contains(group.id))
+    }
+
+    @Test func toggleExpanded_collapsesExpandedGroup() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.expandedGroupIDs.insert(group.id)
+
+        viewModel.toggleExpanded(group.id)
+
+        #expect(!viewModel.expandedGroupIDs.contains(group.id))
+    }
+
+    @Test func collapseSelectedGroup_collapsesSelectedGroup() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.expandedGroupIDs.insert(group.id)
+        viewModel.selection = ["group:\(group.id.uuidString)"]
+
+        viewModel.collapseSelectedGroup()
+
+        #expect(!viewModel.expandedGroupIDs.contains(group.id))
+    }
+
+    @Test func collapseSelectedGroup_doesNothingWhenGroupAlreadyCollapsed() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.selection = ["group:\(group.id.uuidString)"]
+
+        viewModel.collapseSelectedGroup()
+
+        #expect(!viewModel.expandedGroupIDs.contains(group.id))
+    }
+
+    @Test func collapseSelectedGroup_selectsParentGroupWhenMemberSelected() {
+        var group = AppGroup(name: "Work")
+        group.members = [AppGroupMember(bundleIdentifier: "com.apple.Safari", appName: "Safari")]
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.expandedGroupIDs.insert(group.id)
+        viewModel.selection = ["member:\(group.id.uuidString):com.apple.Safari"]
+
+        viewModel.collapseSelectedGroup()
+
+        #expect(viewModel.selection == ["group:\(group.id.uuidString)"])
+    }
+
+    @Test func collapseSelectedGroup_doesNothingWhenBindingSelected() {
+        let bindingID = UUID()
+        let (viewModel, _, _, _, _) = createViewModel(with: [
+            HotkeyBinding(id: bindingID, shortcutName: "s", appBundleIdentifier: "com.safari", appName: "Safari")
+        ])
+        viewModel.selection = ["binding:\(bindingID.uuidString)"]
+
+        viewModel.collapseSelectedGroup()
+
+        #expect(viewModel.selection == ["binding:\(bindingID.uuidString)"])
+    }
+
+    @Test func expandSelectedGroup_expandsSelectedGroup() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+        viewModel.selection = ["group:\(group.id.uuidString)"]
+
+        viewModel.expandSelectedGroup()
+
+        #expect(viewModel.expandedGroupIDs.contains(group.id))
+    }
+
+    @Test func expandSelectedGroup_doesNothingWhenBindingSelected() {
+        let bindingID = UUID()
+        let (viewModel, _, _, _, _) = createViewModel(with: [
+            HotkeyBinding(id: bindingID, shortcutName: "s", appBundleIdentifier: "com.safari", appName: "Safari")
+        ])
+        viewModel.selection = ["binding:\(bindingID.uuidString)"]
+
+        viewModel.expandSelectedGroup()
+
+        #expect(viewModel.expandedGroupIDs.isEmpty)
+    }
+
+    @Test func expandSelectedGroup_doesNothingWhenNoSelection() {
+        let group = AppGroup(name: "Work")
+        let (viewModel, _, _, _, _) = createViewModel(groups: [group])
+
+        viewModel.expandSelectedGroup()
+
+        #expect(viewModel.expandedGroupIDs.isEmpty)
+    }
+
     // MARK: - refreshMetadata Tests
 
     @Test func refreshMetadata_updatesAppNames() {
