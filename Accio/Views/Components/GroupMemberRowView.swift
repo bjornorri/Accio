@@ -39,6 +39,8 @@ struct GroupMemberRowView: View {
                 .lineLimit(1)
                 .foregroundStyle(.primary)
 
+            Spacer()
+
             if showMostRecentLabel {
                 Text("Most Recent")
                     .font(.caption)
@@ -47,8 +49,6 @@ struct GroupMemberRowView: View {
                     .padding(.vertical, 2)
                     .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
             }
-
-            Spacer()
 
             Button(role: .destructive) {
                 onRemove()
