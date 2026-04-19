@@ -36,4 +36,10 @@ extension Defaults.Keys {
         "hotkeyBindings",
         default: []
     )
+
+    /// Array of app groups
+    static let appGroups = Key<[AppGroup]>(
+        "appGroups",
+        default: []
+    )
 }

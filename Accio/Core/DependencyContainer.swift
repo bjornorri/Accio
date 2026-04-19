@@ -119,4 +119,18 @@ extension Container {
         self { DefaultsAppSettingsStore() }
             .singleton
     }
+
+    // MARK: - App Group Store
+
+    var appGroupStore: Factory<AppGroupStore> {
+        self { DefaultsAppGroupStore() }
+            .singleton
+    }
+
+    // MARK: - Group Order Tracker
+
+    var groupOrderTracker: Factory<GroupOrderTracker> {
+        self { @MainActor in NSWorkspaceGroupOrderTracker() }
+            .singleton
+    }
 }

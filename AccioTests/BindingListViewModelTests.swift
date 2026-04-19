@@ -14,17 +14,20 @@ import Testing
 struct BindingListViewModelTests {
 
     private func createViewModel(
-        with bindings: [HotkeyBinding] = []
+        with bindings: [HotkeyBinding] = [],
+        groups: [AppGroup] = []
     ) -> (BindingListViewModel, MockHotkeyManager, MockBindingOrchestrator, MockBindingUndoManager, MockAppMetadataProvider) {
         Container.shared.manager.reset(options: .all)
 
         let mockBindingStore = MockBindingStore(bindings: bindings)
+        let mockGroupStore = MockAppGroupStore(groups: groups)
         let mockHotkeyManager = MockHotkeyManager()
         let mockOrchestrator = MockBindingOrchestrator()
         let mockUndoManager = MockBindingUndoManager()
         let mockMetadataProvider = MockAppMetadataProvider()
 
         Container.shared.bindingStore.register { mockBindingStore }
+        Container.shared.appGroupStore.register { mockGroupStore }
         Container.shared.hotkeyManager.register { mockHotkeyManager }
         Container.shared.bindingOrchestrator.register { mockOrchestrator }
         Container.shared.bindingUndoManager.register { mockUndoManager }

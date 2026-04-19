@@ -20,6 +20,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @Injected(\.windowManager) private var windowManager: WindowManager
     @Injected(\.bindingOrchestrator) private var bindingOrchestrator: BindingOrchestrator
     @Injected(\.bindingStore) private var bindingStore: BindingStore
+    @Injected(\.appGroupStore) private var appGroupStore: AppGroupStore
+    @Injected(\.groupOrderTracker) private var groupOrderTracker: GroupOrderTracker
     @Injected(\.appInfoProvider) private var appInfoProvider: AppInfoProvider
     @Injected(\.appSettingsStore) private var appSettingsStore: AppSettingsStore
 
@@ -34,8 +36,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create menu bar item
         setupMenuBar()
 
-        // Start the binding orchestrator (manages all hotkey bindings)
+        // Start the binding orchestrator (manages all hotkey bindings and groups)
         bindingOrchestrator.start()
+
+        // Start the group order tracker (updates member ordering on app activation)
+        groupOrderTracker.start()
 
         #if DEBUG
         // Always open settings window on launch in debug builds

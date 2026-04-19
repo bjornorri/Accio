@@ -8,12 +8,12 @@ import FactoryKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// A view displaying hotkey bindings in macOS Settings style
+/// A view displaying hotkey bindings and app groups in macOS Settings style
 struct BindingListView: View {
     @Injected(\.appMetadataProvider) private var appMetadataProvider
     @State private var viewModel = BindingListViewModel()
     @State private var coordinator: BindingListViewCoordinator?
-    @State private var visibleBindingIDs: Set<HotkeyBinding.ID> = []
+    @State private var visibleItemIDs: Set<String> = []
     @FocusState private var isSearchFocused: Bool
 
     var body: some View {
@@ -56,7 +56,6 @@ struct BindingListView: View {
     private func setupCoordinator() {
         let newCoordinator = BindingListViewCoordinator()
 
-        // Configure focus coordinator
         newCoordinator.focusCoordinator.onListFocused = { [self] in
             viewModel.handleListFocused()
         }
@@ -67,7 +66,6 @@ struct BindingListView: View {
             isSearchFocused = focused
         }
 
-        // Configure action callbacks
         newCoordinator.onAddItem = { [self] in addBinding() }
 
         newCoordinator.start()
@@ -99,27 +97,38 @@ struct BindingListView: View {
         } description: {
             Text("Press \(Image(systemName: "command"))N to add an application shortcut\nor drag apps here")
         } actions: {
-            Button("Add Shortcut") {
-                addBinding()
+            Menu {
+                Button("Add App Shortcut") { addBinding() }
+                Button("Add App Group") { addGroup() }
+            } label: {
+                Text("Add Shortcut")
             }
+            .menuStyle(.automatic)
             .buttonStyle(.borderedProminent)
+            .fixedSize()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var listToolbar: some View {
-        HStack(spacing: 8) {
-            Button {
-                addBinding()
+        HStack(spacing: 0) {
+            Menu {
+                Button("Add App Shortcut") { addBinding() }
+                Button("Add App Group") { addGroup() }
             } label: {
                 Image(systemName: "plus")
+                    .frame(width: 26, height: 22)
             }
+            .menuStyle(.automatic)
+            .menuIndicator(.hidden)
             .buttonStyle(.borderless)
+            .fixedSize()
 
             Button {
                 viewModel.removeSelected()
             } label: {
                 Image(systemName: "minus")
+                    .frame(width: 26, height: 22)
             }
             .buttonStyle(.borderless)
             .disabled(!viewModel.hasSelection)
@@ -127,91 +136,144 @@ struct BindingListView: View {
             Spacer()
         }
         .frame(maxWidth: 800)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .center)
         .background(.bar)
     }
 
     private var bindingsList: some View {
-        ScrollViewReader { proxy in
-            List(selection: $viewModel.selection) {
-                ForEach(viewModel.filteredBindings) { binding in
-                    BindingRowView(
-                        binding: binding,
-                        appMetadataProvider: appMetadataProvider,
-                        refreshTrigger: viewModel.refreshTrigger,
-                        shouldActivateRecorder: binding.id == viewModel.activeRecorderID,
-                        onRecorderActivated: { [self] in
-                            viewModel.onRecorderActivated(for: binding)
-                        },
-                        onRecorderDeactivated: { [self] in
-                            viewModel.onRecorderDeactivated()
-                            coordinator?.focusCoordinator.focusList()
-                        }
-                    )
-                    .tag(binding.id)
-                    .id(binding.id)
-                    .onAppear { visibleBindingIDs.insert(binding.id) }
-                    .onDisappear { visibleBindingIDs.remove(binding.id) }
-                    .contextMenu {
-                        Button("Record Shortcut") {
-                            viewModel.selection = [binding.id]
-                            viewModel.activateRecorder(for: binding.id)
-                        }
-                        Divider()
-                        Button("Remove", role: .destructive) {
-                            viewModel.selection = [binding.id]
-                            viewModel.removeSelected()
-                        }
-                    }
+        @Bindable var vm = viewModel
+        return ScrollViewReader { proxy in
+            List(selection: $vm.selection) {
+                ForEach(viewModel.filteredItems) { item in
+                    itemView(for: item)
+                        .id(item.id)
+                        .onAppear { visibleItemIDs.insert(item.id) }
+                        .onDisappear { visibleItemIDs.remove(item.id) }
                 }
             }
             .listStyle(.inset)
             .alternatingRowBackgrounds()
             .environment(\.defaultMinListRowHeight, 40)
-            .searchable(text: $viewModel.searchText, placement: .toolbar)
+            .searchable(text: $vm.searchText, placement: .toolbar)
             .searchFocused($isSearchFocused)
             .listKeyHandler(
                 onDelete: {
-                    if viewModel.hasSelection {
-                        viewModel.removeSelected()
-                    }
+                    if viewModel.hasSelection { viewModel.removeSelected() }
                 },
                 onReturn: {
-                    if viewModel.selection.count == 1 {
-                        viewModel.activateSelectedRecorder()
-                    }
+                    if viewModel.selection.count == 1 { viewModel.activateSelectedRecorder() }
                 },
                 onSpace: {
-                    if viewModel.selection.count == 1 {
-                        viewModel.activateSelectedRecorder()
-                    }
+                    if viewModel.selection.count == 1 { viewModel.activateSelectedRecorder() }
                 },
                 onEscape: {
-                    if !viewModel.searchText.isEmpty {
-                        viewModel.searchText = ""
-                    }
+                    if !viewModel.searchText.isEmpty { viewModel.searchText = "" }
                 }
             )
             .onChange(of: isSearchFocused) { _, isFocused in
-                if !isFocused {
-                    coordinator?.focusCoordinator.handleSearchFocusLost()
-                }
+                if !isFocused { coordinator?.focusCoordinator.handleSearchFocusLost() }
             }
             .onChange(of: viewModel.scrollToID) { _, id in
                 if let id {
-                    // Delay to allow the new row to appear and update visibleBindingIDs
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        if !visibleBindingIDs.contains(id) {
-                            withAnimation {
-                                proxy.scrollTo(id, anchor: .center)
-                            }
+                        if !visibleItemIDs.contains(id) {
+                            withAnimation { proxy.scrollTo(id, anchor: .center) }
                         }
                         viewModel.scrollToID = nil
                     }
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func itemView(for item: BindingListItem) -> some View {
+        @Bindable var vm = viewModel
+        switch item {
+        case .binding(let binding):
+            BindingRowView(
+                binding: binding,
+                appMetadataProvider: appMetadataProvider,
+                refreshTrigger: viewModel.refreshTrigger,
+                shouldActivateRecorder: binding.id == viewModel.activeRecorderID,
+                onRecorderActivated: { viewModel.onRecorderActivated(for: binding) },
+                onRecorderDeactivated: {
+                    viewModel.onRecorderDeactivated()
+                    coordinator?.focusCoordinator.focusList()
+                }
+            )
+            .tag(binding.id)
+            .contextMenu {
+                Button("Record Shortcut") {
+                    viewModel.selection = [binding.id]
+                    viewModel.activateRecorder(for: binding.id)
+                }
+                Divider()
+                Button("Remove", role: .destructive) {
+                    viewModel.selection = [binding.id]
+                    viewModel.removeSelected()
+                }
+            }
+
+        case .group(let group):
+            AppGroupRowView(
+                group: group,
+                appMetadataProvider: appMetadataProvider,
+                refreshTrigger: viewModel.refreshTrigger,
+                shouldActivateRecorder: group.id == viewModel.activeRecorderID,
+                isExpanded: viewModel.expandedGroupIDs.contains(group.id),
+                isRenaming: group.id == viewModel.renamingGroupID,
+                renamingText: $vm.pendingGroupName,
+                onToggleExpanded: { viewModel.toggleExpanded(group.id) },
+                onBeginRename: { viewModel.beginRename(for: group.id) },
+                onConfirmRename: { viewModel.confirmRename() },
+                onCancelRename: { viewModel.cancelRename() },
+                onRecorderActivated: { viewModel.onGroupRecorderActivated(for: group) },
+                onRecorderDeactivated: {
+                    viewModel.onRecorderDeactivated()
+                    coordinator?.focusCoordinator.focusList()
+                }
+            )
+            .tag(group.id)
+            .contextMenu {
+                Button("Record Shortcut") {
+                    viewModel.selection = [group.id]
+                    viewModel.activateRecorder(for: group.id)
+                }
+                Button("Rename") {
+                    viewModel.selection = [group.id]
+                    viewModel.beginRename(for: group.id)
+                }
+                Divider()
+                Button("Remove", role: .destructive) {
+                    viewModel.selection = [group.id]
+                    viewModel.removeSelected()
+                }
+            }
+
+        case .groupMember(let member, let groupID, let showMostRecentLabel):
+            GroupMemberRowView(
+                member: member,
+                appMetadataProvider: appMetadataProvider,
+                refreshTrigger: viewModel.refreshTrigger,
+                showMostRecentLabel: showMostRecentLabel,
+                onRemove: { viewModel.removeAppFromGroup(bundleIdentifier: member.bundleIdentifier, groupID: groupID) }
+            )
+            .selectionDisabled(true)
+
+        case .addAppToGroup(let groupID):
+            Button {
+                viewModel.addAppsToGroup(groupID: groupID)
+            } label: {
+                Label("Add App...", systemImage: "plus")
+                    .foregroundStyle(.tint)
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 52)
+            .padding(.vertical, 4)
+            .selectionDisabled(true)
         }
     }
 
@@ -228,7 +290,6 @@ struct BindingListView: View {
                 coordinator?.focusCoordinator.focusList()
             }
         } else {
-            // Panel was cancelled - restore focus
             if wasSearchFocused {
                 isSearchFocused = true
             } else if wasListFocused {
@@ -236,6 +297,13 @@ struct BindingListView: View {
                     coordinator?.focusCoordinator.focusList()
                 }
             }
+        }
+    }
+
+    private func addGroup() {
+        viewModel.addGroup()
+        DispatchQueue.main.async {
+            coordinator?.focusCoordinator.focusList()
         }
     }
 }

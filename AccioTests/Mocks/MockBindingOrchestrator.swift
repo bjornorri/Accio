@@ -10,7 +10,7 @@ final class MockBindingOrchestrator: BindingOrchestrator {
     var startCalled = false
     var stopCalled = false
     var conflictToReturn: ShortcutConflict?
-    var clearedShortcutIDs: [HotkeyBinding.ID] = []
+    var clearedItems: [ShortcutConflict.Item] = []
 
     func start() {
         startCalled = true
@@ -20,11 +20,11 @@ final class MockBindingOrchestrator: BindingOrchestrator {
         stopCalled = true
     }
 
-    func findConflict(for bindingId: HotkeyBinding.ID) -> ShortcutConflict? {
+    func findConflict(for shortcutName: String) -> ShortcutConflict? {
         conflictToReturn
     }
 
-    func clearShortcut(for bindingId: HotkeyBinding.ID) {
-        clearedShortcutIDs.append(bindingId)
+    func clearShortcut(for item: ShortcutConflict.Item) {
+        clearedItems.append(item)
     }
 }
