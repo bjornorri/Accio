@@ -353,6 +353,7 @@ create_github_release() {
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             git -C "$PROJECT_ROOT" tag -d "$TAG_NAME"
             git -C "$PROJECT_ROOT" push origin ":refs/tags/$TAG_NAME" 2>/dev/null || true
+            git -C "$PROJECT_ROOT" push github ":refs/tags/$TAG_NAME" 2>/dev/null || true
         else
             echo "Aborting release creation"
             exit 1
@@ -362,6 +363,7 @@ create_github_release() {
     # Create and push tag
     git -C "$PROJECT_ROOT" tag -a "$TAG_NAME" -m "Release $FULL_VERSION"
     git -C "$PROJECT_ROOT" push origin "$TAG_NAME"
+    git -C "$PROJECT_ROOT" push github "$TAG_NAME"
 
     # Minimal release notes template
     RELEASE_NOTES="## Release Notes
