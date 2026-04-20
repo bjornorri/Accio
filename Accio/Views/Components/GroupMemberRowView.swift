@@ -48,6 +48,7 @@ struct GroupMemberRowView: View {
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                    .help("Pressing the group shortcut will activate this app")
             }
 
             Button(role: .destructive) {
