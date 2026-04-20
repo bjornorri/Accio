@@ -78,6 +78,7 @@ struct AppGroupRowView: View {
             groupIconView
                 .frame(width: 32, height: 32)
                 .padding(.leading, 4)
+                .help("A group shortcut activates the most recently used member app")
 
             // Name area — double-click to rename
             HStack(spacing: 0) {

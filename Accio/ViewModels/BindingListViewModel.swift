@@ -17,14 +17,14 @@ enum BindingListItem: Identifiable {
     case binding(HotkeyBinding)
     case group(AppGroup)
     case groupMember(AppGroupMember, groupID: AppGroup.ID, showMostRecentLabel: Bool)
-    case addAppToGroup(AppGroup.ID)
+    case addAppToGroup(AppGroup.ID, isEmpty: Bool)
 
     var id: String {
         switch self {
         case .binding(let b): return "binding:\(b.id.uuidString)"
         case .group(let g): return "group:\(g.id.uuidString)"
         case .groupMember(let m, let gid, _): return "member:\(gid.uuidString):\(m.bundleIdentifier)"
-        case .addAppToGroup(let gid): return "addapp:\(gid.uuidString)"
+        case .addAppToGroup(let gid, _): return "addapp:\(gid.uuidString)"
         }
     }
 }
@@ -156,7 +156,7 @@ final class BindingListViewModel {
                     let showLabel = index == 0 && group.members.count > 1
                     result.append(.groupMember(member, groupID: group.id, showMostRecentLabel: showLabel))
                 }
-                result.append(.addAppToGroup(group.id))
+                result.append(.addAppToGroup(group.id, isEmpty: group.members.isEmpty))
             }
         }
         return result

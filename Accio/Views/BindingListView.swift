@@ -296,16 +296,24 @@ struct BindingListView: View {
                 onRemove: { viewModel.removeAppFromGroup(bundleIdentifier: member.bundleIdentifier, groupID: groupID) }
             )
 
-        case .addAppToGroup(let groupID):
-            Button {
-                viewModel.addAppsToGroup(groupID: groupID)
-            } label: {
-                Label("Add App", systemImage: "plus")
-                    .foregroundStyle(.tint)
+        case .addAppToGroup(let groupID, let isEmpty):
+            VStack(alignment: .leading, spacing: 2) {
+                if isEmpty {
+                    Text("Group shortcuts active the most recently used app in the group.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 32)
+                }
+                Button {
+                    viewModel.addAppsToGroup(groupID: groupID)
+                } label: {
+                    Label("Add App", systemImage: "plus")
+                        .foregroundStyle(.tint)
+                }
+                .buttonStyle(.plain)
+                .padding(.leading, 30)
+                .padding(.vertical, 4)
             }
-            .buttonStyle(.plain)
-            .padding(.leading, 30)
-            .padding(.vertical, 4)
             .selectionDisabled(true)
         }
     }
