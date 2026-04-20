@@ -26,7 +26,7 @@ struct SettingsView: View {
             Tab("General", systemImage: "gear", value: .general) {
                 GeneralSettingsView()
             }
-            Tab("Shortcuts", systemImage: "keyboard", value: .shortcuts) {
+            Tab("Shortcuts", systemImage: "sparkles", value: .shortcuts) {
                 BindingListView()
             }
         }
