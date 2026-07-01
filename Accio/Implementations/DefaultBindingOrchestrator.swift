@@ -147,7 +147,17 @@ final class DefaultBindingOrchestrator: BindingOrchestrator {
             applicationManager.isRunning(bundleIdentifier: $0.bundleIdentifier)
         }
 
-        if let firstRunning = runningMembers.first {
+        if runningMembers.count > 1,
+           let focusedIndex = runningMembers.firstIndex(where: { applicationManager.isFocused(bundleIdentifier: $0.bundleIdentifier) }) {
+            // Cycle to the next running member (going backward in recency to visit all members)
+            let nextIndex = (focusedIndex - 1 + runningMembers.count) % runningMembers.count
+            let nextMember = runningMembers[nextIndex]
+            do {
+                try applicationManager.activate(bundleIdentifier: nextMember.bundleIdentifier)
+            } catch {
+                print("Failed to cycle group member focus: \(error)")
+            }
+        } else if let firstRunning = runningMembers.first {
             await actionCoordinator.executeAction(for: firstRunning.bundleIdentifier, settings: settings)
         } else {
             switch settings.whenNotRunning {

@@ -3,6 +3,7 @@
 //  AccioTests
 //
 
+import Defaults
 import FactoryKit
 import FactoryTesting
 import Foundation
@@ -10,6 +11,7 @@ import Testing
 @testable import Accio
 
 @Suite(.container, .serialized)
+@MainActor
 struct DefaultBindingOrchestratorTests {
 
     private func createOrchestrator() -> (DefaultBindingOrchestrator, MockHotkeyManager) {
@@ -17,6 +19,21 @@ struct DefaultBindingOrchestratorTests {
 
         let mockHotkeyManager = MockHotkeyManager()
         Container.shared.hotkeyManager.register { mockHotkeyManager }
+
+        let orchestrator = DefaultBindingOrchestrator()
+        return (orchestrator, mockHotkeyManager)
+    }
+
+    private func createOrchestrator(
+        appManager: ApplicationManager,
+        actionCoordinator: ActionCoordinator
+    ) -> (DefaultBindingOrchestrator, MockHotkeyManager) {
+        Container.shared.manager.reset(options: .all)
+
+        let mockHotkeyManager = MockHotkeyManager()
+        Container.shared.hotkeyManager.register { mockHotkeyManager }
+        Container.shared.applicationManager.register { appManager }
+        Container.shared.actionCoordinator.register { actionCoordinator }
 
         let orchestrator = DefaultBindingOrchestrator()
         return (orchestrator, mockHotkeyManager)
@@ -123,5 +140,163 @@ struct DefaultBindingOrchestratorTests {
 
         // Should only be registered once
         #expect(mockHotkeyManager.registeredNames == ["safari"])
+    }
+
+    // MARK: - App Group Execution Tests
+
+    @Test func executeGroup_whenNoAppsRunning_executesActionOnFirstMember() async {
+        let testAppManager = TestApplicationManager()
+        let testActionCoordinator = TestActionCoordinator()
+        let (orchestrator, mockHotkeyManager) = createOrchestrator(appManager: testAppManager, actionCoordinator: testActionCoordinator)
+        
+        let appA = AppGroupMember(bundleIdentifier: "com.app.A", appName: "App A")
+        let appB = AppGroupMember(bundleIdentifier: "com.app.B", appName: "App B")
+        let group = AppGroup(id: UUID(), name: "Test Group")
+        var mutableGroup = group
+        mutableGroup.members = [appA, appB]
+        
+        Defaults[.appGroups] = [mutableGroup]
+        
+        orchestrator.handleGroupsChange(oldGroups: [], newGroups: [mutableGroup])
+        
+        if let handler = mockHotkeyManager.handlers[mutableGroup.shortcutName] {
+            await handler()
+        }
+        
+        // Should execute action (launch) on the first member (App A)
+        #expect(testActionCoordinator.executedCalls == ["com.app.A"])
+        #expect(testAppManager.activateCalls.isEmpty)
+    }
+
+    @Test func executeGroup_whenOneAppRunningAndNotFocused_executesActionOnRunningApp() async {
+        let testAppManager = TestApplicationManager()
+        testAppManager.runningApps = ["com.app.B"]
+        let testActionCoordinator = TestActionCoordinator()
+        let (orchestrator, mockHotkeyManager) = createOrchestrator(appManager: testAppManager, actionCoordinator: testActionCoordinator)
+        
+        let appA = AppGroupMember(bundleIdentifier: "com.app.A", appName: "App A")
+        let appB = AppGroupMember(bundleIdentifier: "com.app.B", appName: "App B")
+        let group = AppGroup(id: UUID(), name: "Test Group")
+        var mutableGroup = group
+        mutableGroup.members = [appA, appB]
+        
+        Defaults[.appGroups] = [mutableGroup]
+        
+        orchestrator.handleGroupsChange(oldGroups: [], newGroups: [mutableGroup])
+        
+        if let handler = mockHotkeyManager.handlers[mutableGroup.shortcutName] {
+            await handler()
+        }
+        
+        // Should execute action on the running member (App B)
+        #expect(testActionCoordinator.executedCalls == ["com.app.B"])
+        #expect(testAppManager.activateCalls.isEmpty)
+    }
+
+    @Test func executeGroup_whenMultipleAppsRunningAndNoneFocused_executesActionOnFirstRunning() async {
+        let testAppManager = TestApplicationManager()
+        testAppManager.runningApps = ["com.app.A", "com.app.B"]
+        let testActionCoordinator = TestActionCoordinator()
+        let (orchestrator, mockHotkeyManager) = createOrchestrator(appManager: testAppManager, actionCoordinator: testActionCoordinator)
+        
+        let appA = AppGroupMember(bundleIdentifier: "com.app.A", appName: "App A")
+        let appB = AppGroupMember(bundleIdentifier: "com.app.B", appName: "App B")
+        let group = AppGroup(id: UUID(), name: "Test Group")
+        var mutableGroup = group
+        mutableGroup.members = [appA, appB]
+        
+        Defaults[.appGroups] = [mutableGroup]
+        
+        orchestrator.handleGroupsChange(oldGroups: [], newGroups: [mutableGroup])
+        
+        if let handler = mockHotkeyManager.handlers[mutableGroup.shortcutName] {
+            await handler()
+        }
+        
+        // Since none are focused, it should execute action on the first running app (App A)
+        #expect(testActionCoordinator.executedCalls == ["com.app.A"])
+        #expect(testAppManager.activateCalls.isEmpty)
+    }
+
+    @Test func executeGroup_whenMultipleAppsRunningAndOneFocused_cyclesToNext() async {
+        let testAppManager = TestApplicationManager()
+        testAppManager.runningApps = ["com.app.A", "com.app.B", "com.app.C"]
+        let testActionCoordinator = TestActionCoordinator()
+        let (orchestrator, mockHotkeyManager) = createOrchestrator(appManager: testAppManager, actionCoordinator: testActionCoordinator)
+        
+        let appA = AppGroupMember(bundleIdentifier: "com.app.A", appName: "App A")
+        let appB = AppGroupMember(bundleIdentifier: "com.app.B", appName: "App B")
+        let appC = AppGroupMember(bundleIdentifier: "com.app.C", appName: "App C")
+        let group = AppGroup(id: UUID(), name: "Test Group")
+        var mutableGroup = group
+        mutableGroup.members = [appA, appB, appC]
+        
+        Defaults[.appGroups] = [mutableGroup]
+        
+        orchestrator.handleGroupsChange(oldGroups: [], newGroups: [mutableGroup])
+        
+        // Scenario 1: App A (index 0) is focused -> should cycle to App C (index 2)
+        testAppManager.focusedApp = "com.app.A"
+        testAppManager.activateCalls.removeAll()
+        if let handler = mockHotkeyManager.handlers[mutableGroup.shortcutName] {
+            await handler()
+        }
+        #expect(testActionCoordinator.executedCalls.isEmpty)
+        #expect(testAppManager.activateCalls == ["com.app.C"])
+        
+        // Scenario 2: App B (index 1) is focused -> should cycle to App A (index 0)
+        testAppManager.focusedApp = "com.app.B"
+        testAppManager.activateCalls.removeAll()
+        if let handler = mockHotkeyManager.handlers[mutableGroup.shortcutName] {
+            await handler()
+        }
+        #expect(testActionCoordinator.executedCalls.isEmpty)
+        #expect(testAppManager.activateCalls == ["com.app.A"])
+        
+        // Scenario 3: App C (index 2) is focused -> should cycle to App B (index 1)
+        testAppManager.focusedApp = "com.app.C"
+        testAppManager.activateCalls.removeAll()
+        if let handler = mockHotkeyManager.handlers[mutableGroup.shortcutName] {
+            await handler()
+        }
+        #expect(testActionCoordinator.executedCalls.isEmpty)
+        #expect(testAppManager.activateCalls == ["com.app.B"])
+    }
+}
+
+// MARK: - Test Helpers
+
+private final class TestApplicationManager: ApplicationManager {
+    var runningApps: Set<String> = []
+    var focusedApp: String? = nil
+    var activateCalls: [String] = []
+
+    func launch(bundleIdentifier: String) async throws {
+        runningApps.insert(bundleIdentifier)
+    }
+
+    func activate(bundleIdentifier: String) throws {
+        activateCalls.append(bundleIdentifier)
+        focusedApp = bundleIdentifier
+    }
+
+    func isRunning(bundleIdentifier: String) -> Bool {
+        runningApps.contains(bundleIdentifier)
+    }
+
+    func isFocused(bundleIdentifier: String) -> Bool {
+        focusedApp == bundleIdentifier
+    }
+
+    func hide(bundleIdentifier: String) throws {}
+
+    func hasWindows(bundleIdentifier: String) -> Bool { true }
+}
+
+private final class TestActionCoordinator: ActionCoordinator {
+    var executedCalls: [String] = []
+
+    func executeAction(for bundleIdentifier: String, settings: AppBehaviorSettings) async {
+        executedCalls.append(bundleIdentifier)
     }
 }
